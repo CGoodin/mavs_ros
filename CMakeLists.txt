@@ -1,0 +1,73 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(mavs_avt_example)
+
+add_definitions(-DUSE_OMP)
+add_definitions(-DUSE_EMBREE)
+
+##Modify these to the appropriate paths
+SET(mavs_INCLUDE_DIR  "/home/msucavs/mavs/src/")
+SET(mavs_LIB_DIR  "/home/msucavs/mavs/build/lib")
+
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  rospy
+  std_msgs
+)
+
+find_package(PCL REQUIRED)
+
+add_definitions(${PCL_DEFINITIONS})
+
+
+###################################
+## catkin specific configuration ##
+###################################
+catkin_package(
+#  CATKIN_DEPENDS message_runtime tf
+)
+
+###########
+## Build ##
+###########
+
+include_directories( 
+  include
+  ${catkin_INCLUDE_DIRS}  
+  ${PCL_INCLUDE_DIRS} 
+  ${mavs_INCLUDE_DIR} 
+  ${mavs_INCLUDE_DIR}/thirdparty/reactphysics3d/src
+)
+  
+link_directories(
+  ${PCL_LIBRARY_DIRS} 
+  ${mavs_LIB_DIR}
+)
+
+add_executable(mavs_avt_vehicle_node src/mavs_avt_vehicle_node.cpp src/mavs_ros_utils.cpp)
+target_link_libraries(mavs_avt_vehicle_node
+  ${catkin_LIBRARIES}
+  X11
+  gomp
+  mavs
+)
+
+add_executable(mavs_avt_sensors_node src/mavs_avt_sensors_node.cpp src/mavs_ros_utils.cpp)
+target_link_libraries(mavs_avt_sensors_node
+  ${catkin_LIBRARIES}
+  X11
+  gomp
+  mavs
+)
+
+## Mark executables for installation
+install(TARGETS 
+  mavs_avt_vehicle_node
+  mavs_avt_sensors_node
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
