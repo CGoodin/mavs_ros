@@ -18,8 +18,7 @@
 
 float throttle = 0.0f;
 float steering = 0.0f;
-float braking = 1.0f;
-
+float braking = 0.0f;
 void TwistCallback(const geometry_msgs::Twist::ConstPtr &rcv_msg){
 	throttle = rcv_msg->linear.x;
 	braking = rcv_msg->linear.y;
@@ -79,7 +78,6 @@ int main(int argc, char **argv){
 		ros::param::get("~Initial_Heading", heading_init);
 	}
 
-	//glm::vec3 initial_position(x_init + mavs::math::rand_in_range(-0.5f * pos_rand, 0.5f * pos_rand), y_init + mavs::math::rand_in_range(-0.5f * pos_rand, 0.5f * pos_rand), 1.0f);
 	glm::vec3 initial_position(x_init, y_init, 1.0f);
 	glm::quat initial_orientation(cos(0.5 * heading_init), 0.0f, 0.0f, sin(0.5 * heading_init));
 	std::string rp3d_vehicle_file;
@@ -113,6 +111,7 @@ int main(int argc, char **argv){
 
 	mavs::vehicle::Rp3dVehicle mavs_veh;
 	mavs_veh.Load(rp3d_vehicle_file);
+	std::cout<<"Set MAVS Vehicle inital position "<<initial_position.x<<" "<<initial_position.y<<std::endl;
 	mavs_veh.SetPosition(initial_position.x, initial_position.y, initial_position.z);
 	mavs_veh.SetOrientation(initial_orientation.w, initial_orientation.x, initial_orientation.y, initial_orientation.z);
 	mavs_veh.Update(&env, throttle, steering, braking, 0.00001);
@@ -127,10 +126,7 @@ int main(int argc, char **argv){
 		//random_seed_pub.publish(rand_msg);
 
 		//vehicle state update
-		throttle = 0.2f;
-		braking = 0.0f;
-		steering = 0.25f;
-		mavs_veh.Update(&env, throttle, steering, braking, dt);
+		mavs_veh.Update(&env, throttle, steering, -braking, dt);
 		mavs::VehicleState veh_state = mavs_veh.GetState();
 
 		nav_msgs::Odometry true_odom = mavs_ros_utils::CopyFromMavsVehicleState(veh_state);

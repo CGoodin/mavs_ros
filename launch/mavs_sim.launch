@@ -1,5 +1,6 @@
 <launch>
 
+  <!--<arg name="scene_file_arg" default="/home/msucavs/mavs/data/scenes/surface_only.json" />-->
   <arg name="scene_file_arg" default="/home/msucavs/mavs/data/scenes/cube_scene.json" />
   <arg name="vehicle_file_arg" default="/home/msucavs/mavs/data/vehicles/rp3d_vehicles/mrzr4.json" />
 
@@ -8,14 +9,12 @@
   <arg name="odometry_topic_arg" default="avt_341/odometry" />
 
   <node name="mavs_avt_vehcicle_node" pkg="mavs_avt_example" type="mavs_avt_vehicle_node" output="screen" required="true" >
-    <remap from="cmd_vel" to="$(arg cmd_vel_topic_arg)"/> 
+    <remap from="mavs_avt/cmd_vel" to="$(arg cmd_vel_topic_arg)"/> 
     <remap from="mavs_avt/odometry" to="$(arg odometry_topic_arg)"/> 
     <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
-    <param name = "Initial_X_Position" value = "-55.0"/>
-    <param name = "Initial_Y_Position" value = "0.0"/>
-    <param name = "Initial_Heading" value = "0.0"/>
-    <!--<param name="Randomize_Position" value = "1.0" />
-    <param name="Randomize_Heading" value = "0.1" />-->
+    <param name = "Initial_X_Position" value = "0.0"/>
+    <param name = "Initial_Y_Position" value = "-50.0"/>
+    <param name = "Initial_Heading" value = "1.57"/>
     <param name="scene_file" value="$(arg scene_file_arg)"/>
     <param name = "soil_strength" value = "250"/> 
     <param name = "surface_type" value = "dry"/>  
@@ -24,9 +23,6 @@
 
   <node name="mavs_avt_sensors_node" pkg="mavs_avt_example" type="mavs_avt_sensors_node" output="screen" required="true" >
     <remap from="mavs_avt/point_cloud2" to="$(arg point_cloud_topic_arg)"/> 
-    
-    <!--<remap from="$(arg point_cloud_topic_arg)" to="mavs_avt/point_cloud2"/> 
-    <remap from="$(arg odometry_topic_arg)" to="mavs_avt/odometry"/> -->
     <param name= "debug_camera" value="true" />
     <param name= "use_lidar" value="true" />
     <param name= "display_lidar" value="true" />

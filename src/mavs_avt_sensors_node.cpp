@@ -48,8 +48,6 @@ int main(int argc, char **argv){
 	ros::Publisher clock_pub;
 
 	ros::Subscriber odom_sub = n.subscribe("mavs_avt/odometry_true", 1, OdomCallback);
-	//ros::Subscriber seed_sub = n.subscribe("mavs_ros/random_seed", 1, SeedCallback);
-
 	ros::Publisher lidar_pub = n.advertise<sensor_msgs::PointCloud2>("mavs_avt/point_cloud2", 1);
 
 	std::string scene_file;
@@ -213,8 +211,10 @@ int main(int argc, char **argv){
 			
 			lidar->Update(&env, 0.1);
 		
-			mavs::PointCloud2 mavs_pc = lidar->GetPointCloud2(); //lidar->GetPointCloud2Registered(); 
+			mavs::PointCloud2 mavs_pc = lidar->GetPointCloud2(); 
+			//mavs::PointCloud2 mavs_pc = lidar->GetPointCloud2Registered(); 
 			sensor_msgs::PointCloud2 pc = mavs_ros_utils::CopyFromMavsPc2(mavs_pc);
+
 			nscans++;
 
 			pc.header.stamp = ros::Time::now();
