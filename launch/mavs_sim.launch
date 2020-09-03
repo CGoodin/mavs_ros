@@ -1,6 +1,5 @@
 <launch>
 
-  <!--<arg name="scene_file_arg" default="/home/msucavs/mavs/data/scenes/surface_only.json" />-->
   <arg name="scene_file_arg" default="/home/msucavs/mavs/data/scenes/forester_scene_less_trees_simple.json" />
   <arg name="vehicle_file_arg" default="/home/msucavs/mavs/data/vehicles/rp3d_vehicles/mrzr4.json" />
 
@@ -26,8 +25,10 @@
     <param name= "debug_camera" value="true" />
     <param name= "use_lidar" value="true" />
     <param name= "display_lidar" value="true" />
+    <param name= "register_lidar" value="true" />
     <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
     <param name = "lidar_type" value = "OS1"/>
+    <param name="blanking_dist" value="5.0" />
     <param name="scene_file" value="$(arg scene_file_arg)"/>
   </node>
 

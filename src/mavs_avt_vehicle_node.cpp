@@ -31,7 +31,6 @@ int main(int argc, char **argv){
 	ros::NodeHandle n;
 
 	ros::Publisher clock_pub;
-	// left_image_pub,right_image_pub,left_info_pub,right_info_pub, true_disparity_pub;
 	ros::Subscriber twist_sub = n.subscribe("mavs_avt/cmd_vel", 1, TwistCallback);
 
 	ros::Publisher odom_true = n.advertise<nav_msgs::Odometry>("mavs_avt/odometry_true", 10);
@@ -111,7 +110,6 @@ int main(int argc, char **argv){
 
 	mavs::vehicle::Rp3dVehicle mavs_veh;
 	mavs_veh.Load(rp3d_vehicle_file);
-	std::cout<<"Set MAVS Vehicle inital position "<<initial_position.x<<" "<<initial_position.y<<std::endl;
 	mavs_veh.SetPosition(initial_position.x, initial_position.y, initial_position.z);
 	mavs_veh.SetOrientation(initial_orientation.w, initial_orientation.x, initial_orientation.y, initial_orientation.z);
 	mavs_veh.Update(&env, throttle, steering, braking, 0.00001);
@@ -123,8 +121,6 @@ int main(int argc, char **argv){
 
 	double start_time = ros::Time::now().toSec();
 	while (ros::ok()){
-		//random_seed_pub.publish(rand_msg);
-
 		//vehicle state update
 		mavs_veh.Update(&env, throttle, steering, -braking, dt);
 		mavs::VehicleState veh_state = mavs_veh.GetState();

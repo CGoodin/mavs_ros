@@ -22,7 +22,11 @@ to match the path to the MAVS "src" and "lib" directories on your system. Then, 
 $catkin_make install
 ```
 
-To use the MAVS example with the AVT-341 autonomy, uncomment lines 58-62 of "example.launch" and comment out line 52. Then, run the example as before.
+## Running the Example
+
+To use the MAVS example, you will need to specify which scene file and vehicle file to use. This requires you to edit lines 3-4 of "mavs_sim.launch" to have the correct path to the data folder of your MAVS installation. With this complete, you can run the example.
 ```bash
 $roslaunch mavs_avt_example mavs_sim.launch
 ```
+
+The example does not have integrated autonomy. To use with the AVT-341 autonomy, please see the instructions in the README for that package.

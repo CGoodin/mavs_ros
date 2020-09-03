@@ -36,10 +36,6 @@ void OdomCallback(const nav_msgs::Odometry::ConstPtr& rcv_odom){
 	veh_state.pose.quaternion.z = rcv_odom->pose.pose.orientation.z;
 }
 
-//void SeedCallback(const std_msgs::Int64::ConstPtr& rcv_seed){
-//	 random_seed = rcv_seed->data;
-//}
-
 int main(int argc, char **argv){
 	//- Create the node and subscribers ---//
 	ros::init(argc, argv, "mavs_avt_sensors_node");
@@ -65,14 +61,10 @@ int main(int argc, char **argv){
 	if (ros::param::has("~dust_rate")){
 		ros::param::get("~dust_rate", dust_rate);
 	}
-
 	bool use_lidar = true;
 	if (ros::param::has("~use_lidar")){
 		ros::param::get("~use_lidar", use_lidar);
 	}
-
-	mavs::sensor::lidar::LidarTools pc_analyzer;
-
 	bool render_debug = false;
 	if (ros::param::has("~debug_camera")){
 		ros::param::get("~debug_camera", render_debug);
@@ -81,9 +73,17 @@ int main(int argc, char **argv){
 	if (ros::param::has("~display_lidar")){
 		ros::param::get("~display_lidar", display_lidar);
 	}
+	bool register_lidar = true;
+	if (ros::param::has("~register_lidar")){
+		ros::param::get("~register_lidar", register_lidar);
+	}
 	std::string lidar_type = "OS1";
 	if (ros::param::has("~lidar_type")){
 		ros::param::get("~lidar_type", lidar_type);
+	}
+	float blanking_dist = 1.0f;
+	if (ros::param::has("~blanking_dist")){
+		ros::param::get("~blanking_dist",blanking_dist);
 	}
 	float grid_size = 500.0f;
 	if (ros::param::has("~grid_size")){
@@ -119,11 +119,8 @@ int main(int argc, char **argv){
 		env.AddParticleSystem(dust);
 	}
 	mavs::raytracer::embree::EmbreeTracer scene;
-	scene.Load(scene_file); //, random_seed);
+	scene.Load(scene_file); 
 	scene.TurnOffLabeling();
-	//if (save_training_data){
-	//	scene.TurnOnLabeling();
-	//}
 	env.SetRaytracer(&scene);
 
 	mavs::vehicle::Rp3dVehicle mavs_veh;
@@ -134,21 +131,15 @@ int main(int argc, char **argv){
 		mavs_veh.Update(&env, 0.0, 0.0, 1.0, 0.00001);
 	}
 
-	//glm::vec3 offset(0.0f, 0.0f, 1.8f);
 	glm::vec3 offset(0.0f, 0.0f, 1.35f);
 	glm::vec3 origin(0.0f, 0.0f, 0.f);
 	glm::quat relor(1.0f, 0.0f, 0.0f, 0.0f);
 
 	mavs::sensor::camera::RgbCamera camera;
-	//camera.Initialize(256,256,0.0035,0.0035,0.0035);
 	camera.Initialize(512, 512, 0.0035, 0.0035, 0.0035);
 	camera.SetRenderShadows(false);
-	//mavs::sensor::camera::HalfHDPathTraced camera(150,10,0.55f);
 	glm::vec3 cam_offset(-10.0, 0.0, 2.0);
 	camera.SetRelativePose(cam_offset, relor);
-	//camera.SetRelativePose(offset,relor);
-	//mavs::sensor::camera::MachineVisionPathTraced pt_cam(150,10,0.55f);
-	//pt_cam.SetRelativePose(cam_offset,relor);
 
 	mavs::sensor::lidar::Lidar *lidar;
 
@@ -182,59 +173,49 @@ int main(int argc, char **argv){
 	}
 
 	lidar->SetRelativePose(offset, relor);
-
+	lidar->SetBlankingDist(blanking_dist);
 	double dt = 0.1;
 	ros::Rate rate(1.0 / dt);
-	//int nsteps = 10;
 	int nscans = 0;
 	double elapsed_time = 0.0;
-
 	double start_time = ros::Time::now().toSec();
 	while (ros::ok()){
 
+		env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
+	
+		if (render_debug){
+			camera.SetPose(veh_state);
+			camera.Update(&env, 0.033);
+			camera.Display();
+		}
+
+		double t0 = omp_get_wtime();
+		env.AdvanceParticleSystems(0.1);
+
+		lidar->SetPose(veh_state);
 		
-			if (render_debug){
-				env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
-				camera.SetPose(veh_state);
-				camera.Update(&env, 0.033);
-				camera.Display();
-			}
-		
+		lidar->Update(&env, 0.1);
+	
+		mavs::PointCloud2 mavs_pc;
+		if (register_lidar){
+			mavs_pc = lidar->GetPointCloud2Registered(); 
+		}
+		else{
+			mavs_pc = lidar->GetPointCloud2();
+		}
+		sensor_msgs::PointCloud2 pc = mavs_ros_utils::CopyFromMavsPc2(mavs_pc);
 
-		//lidar update
-		//std::cout<<"Nsteps = "<<nsteps<<std::endl;
-		//if (nsteps % 10 == 0 && use_lidar){
-			double t0 = omp_get_wtime();
-			env.AdvanceParticleSystems(0.1);
+		nscans++;
 
-			lidar->SetPose(veh_state);
-			
-			lidar->Update(&env, 0.1);
-		
-			mavs::PointCloud2 mavs_pc = lidar->GetPointCloud2(); 
-			//mavs::PointCloud2 mavs_pc = lidar->GetPointCloud2Registered(); 
-			sensor_msgs::PointCloud2 pc = mavs_ros_utils::CopyFromMavsPc2(mavs_pc);
+		pc.header.stamp = ros::Time::now();
+		pc.header.frame_id = "odom";
+		lidar_pub.publish(pc);
 
-			nscans++;
-
-			pc.header.stamp = ros::Time::now();
-			pc.header.frame_id = "odom";
-			lidar_pub.publish(pc);
-
-			//lidar_error.x = lidar->GetRangeErrors();
-			//lidar_error_pub.publish(lidar_error);
-			if (display_lidar){
-				lidar->Display();
-			}
-			
-			//nsteps = 0;
-		//} //lidar update
-
-		//clock update
-		//nsteps++;
+		if (display_lidar){
+			lidar->Display();
+		}
 
 		rate.sleep();
-
 		ros::spinOnce();
 	} //while ros OK
 
