@@ -12,12 +12,7 @@ Next, clone the example MAVS simulation package.
 $git clone https://github.com/CGoodin/mavs_avt_example.git
 ```
 
-In order to build the repo, you will need to modify the CMakeLists.txt file in the mavs_avt_example to find your MAVS installation. In lines 8-9, change the following lines 
-```
-SET(mavs_INCLUDE_DIR  "/home/msucavs/mavs/src/")
-SET(mavs_LIB_DIR  "/home/msucavs/mavs/build/lib")
-```
-to match the path to the MAVS "src" and "lib" directories on your system. Then, from the top level catkin_ws directory, type
+To build the repo, from the top level catkin_ws directory, type
 ```bash
 $catkin_make install
 ```
