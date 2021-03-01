@@ -5,8 +5,10 @@ add_definitions(-DUSE_OMP)
 add_definitions(-DUSE_EMBREE)
 
 ##Modify these to the appropriate paths
-SET(mavs_INCLUDE_DIR  "/home/msucavs/mavs/src/")
-SET(mavs_LIB_DIR  "/home/msucavs/mavs/build/lib")
+#SET(mavs_INCLUDE_DIR  "/home/msucavs/mavs/src/")
+#SET(mavs_LIB_DIR  "/home/msucavs/mavs/build/lib")
+
+find_package(MAVS REQUIRED)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
@@ -39,13 +41,12 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}  
   ${PCL_INCLUDE_DIRS} 
-  ${mavs_INCLUDE_DIR} 
-  ${mavs_INCLUDE_DIR}/thirdparty/reactphysics3d/src
+  #${mavs_INCLUDE_DIR} 
+  #${mavs_INCLUDE_DIR}/thirdparty/reactphysics3d/src
 )
   
 link_directories(
   ${PCL_LIBRARY_DIRS} 
-  ${mavs_LIB_DIR}
 )
 
 add_executable(mavs_avt_vehicle_node src/mavs_avt_vehicle_node.cpp src/mavs_ros_utils.cpp)
@@ -53,7 +54,8 @@ target_link_libraries(mavs_avt_vehicle_node
   ${catkin_LIBRARIES}
   X11
   gomp
-  mavs
+  MAVS::mavs 
+  ${EMBREE_LIBRARY}
 )
 
 add_executable(mavs_avt_sensors_node src/mavs_avt_sensors_node.cpp src/mavs_ros_utils.cpp)
@@ -61,7 +63,8 @@ target_link_libraries(mavs_avt_sensors_node
   ${catkin_LIBRARIES}
   X11
   gomp
-  mavs
+  MAVS::mavs 
+  ${EMBREE_LIBRARY}
 )
 
 ## Mark executables for installation

@@ -19,7 +19,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 // mavs includes
 #include <mavs_core/messages.h>
-#include "thirdparty/CImg.h"
+#include "CImg.h"
 #ifdef Success
   #undef Success
 #endif
