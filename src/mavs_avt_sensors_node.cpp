@@ -136,7 +136,7 @@ int main(int argc, char **argv){
 	glm::quat relor(1.0f, 0.0f, 0.0f, 0.0f);
 
 	mavs::sensor::camera::RgbCamera camera;
-	camera.Initialize(512, 512, 0.0035, 0.0035, 0.0035);
+	camera.Initialize(384, 384, 0.0035, 0.0035, 0.0035);
 	camera.SetRenderShadows(false);
 	glm::vec3 cam_offset(-10.0, 0.0, 2.0);
 	camera.SetRelativePose(cam_offset, relor);
