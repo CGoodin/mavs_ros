@@ -1,6 +1,8 @@
 // c++ includes
 #include <omp.h>
 #include <unistd.h>
+#include <iostream>
+#include <fstream>
 //ros includes
 #include "ros/ros.h"
 #include "nav_msgs/Odometry.h"
@@ -25,11 +27,23 @@ void TwistCallback(const geometry_msgs::Twist::ConstPtr &rcv_msg){
 	steering = rcv_msg->angular.z;
 }
 
+inline float GetHeadingFromOrientation(glm::quat orientation){
+    tf::Quaternion q(
+        orientation.x,
+        orientation.y,
+        orientation.z,
+        orientation.w);
+	tf::Matrix3x3 m(q);
+	double roll, pitch, yaw;
+	m.getRPY(roll, pitch, yaw);
+    return (float)yaw;
+}
+
 int main(int argc, char **argv){
 	//- Create the node and subscribers ---//
 	ros::init(argc, argv, "mavs_avt_vehicle_node");
 	ros::NodeHandle n;
-
+	
 	ros::Publisher clock_pub;
 	ros::Subscriber twist_sub = n.subscribe("mavs_avt/cmd_vel", 1, TwistCallback);
 
@@ -55,6 +69,14 @@ int main(int argc, char **argv){
 		std::cerr << "ERROR: No scene file listed " << std::endl;
 	}
 
+	std::string trial_name;
+	if (ros::param::has("~trial_name")){
+		ros::param::get("~trial_name", trial_name);
+	}
+	else{
+		std::cerr << "ERROR: No trial name listed " << std::endl;
+	}
+
 	float soil_strength = 250.0f;
 	if (ros::param::has("~soil_strength")){
 		ros::param::get("~soil_strength", soil_strength);
@@ -62,6 +84,12 @@ int main(int argc, char **argv){
 	std::string surface_type = "dry";
 	if (ros::param::has("~surface_type")){
 		ros::param::get("~surface_type", surface_type);
+	}
+	float rain_rate = 0.0f;
+	if (ros::param::has("/mavs_avt_sensors_node/rain_rate")){
+		ros::param::get("/mavs_avt_sensors_node/rain_rate", rain_rate);
+	} else {
+		std::cerr << "ERROR: No Rain Rate Found" << std::endl;
 	}
 
 	float x_init = -45.0f;
@@ -119,11 +147,38 @@ int main(int argc, char **argv){
 
 	double elapsed_time = 0.0;
 
+	// Logging
+	std::ofstream experimentLogFile;
+	experimentLogFile.open("/cavs/projects/ARC/Project1.31/users/dwc2/2021casestudy/data/results/" + trial_name + "-experiment.csv", std::ios::out | std::ios::trunc);
+	experimentLogFile << "Time,PosX,PosY,Heading,Speed,Distance\n";
+  	//experimentLogFileName = "../results/" + waypointFile.split('.')[0] + "-experiment.csv"
+  	double distance_traveled = 0.0f;
+	float prev_x = x_init;
+	float prev_y = y_init;
+
 	double start_time = ros::Time::now().toSec();
+	uint64_t start_time_nSec = ros::Time::now().toNSec();
+	std::string outcome = "SUCCESS";
 	while (ros::ok()){
 		//vehicle state update
 		mavs_veh.Update(&env, throttle, steering, -braking, dt);
 		mavs::VehicleState veh_state = mavs_veh.GetState();
+
+		// save state data: Time,PosX,PosY,Heading-Rad,Speed,DistanceTraveled
+		float veh_x_ = veh_state.pose.position.x;
+		float veh_y_ = veh_state.pose.position.y;
+		float vx = veh_state.twist.linear.x;
+		float vy = veh_state.twist.linear.y;
+		float veh_speed_ = sqrt(vx*vx + vy*vy);
+		float veh_heading_ = GetHeadingFromOrientation(veh_state.pose.quaternion);
+		float dtx = prev_x - veh_x_;
+		float dty = prev_y - veh_y_;
+		prev_x = veh_x_;
+		prev_y = veh_y_;
+		double dtravel = sqrt(dtx*dtx + dty*dty);
+		distance_traveled = distance_traveled + dtravel;
+		experimentLogFile << ros::Time::now().toNSec() - start_time_nSec << "," << veh_x_ << "," << veh_y_ << "," << veh_heading_ << "," << veh_speed_ << "," << distance_traveled << "\n";
+		 
 
 		nav_msgs::Odometry true_odom = mavs_ros_utils::CopyFromMavsVehicleState(veh_state);
 
@@ -163,5 +218,13 @@ int main(int argc, char **argv){
 	if (use_sim_time)
 		tot_time = elapsed_time;
 
+	experimentLogFile.close();
+	std::ofstream experimentResultsFile;
+	experimentResultsFile.open("/cavs/projects/ARC/Project1.31/users/dwc2/2021casestudy/data/results/case-study-results.csv", std::ios::out | std::ios::app);
+	experimentResultsFile << ros::Time::now().toSec() << ",";
+    experimentResultsFile << trial_name << "," << soil_strength << "," << surface_type << "," << rain_rate << ",";
+	experimentResultsFile << x_init << "," << y_init << "," << prev_x << "," << prev_y << ",";
+	experimentResultsFile << tot_time << "," << elapsed_time << "," << distance_traveled << "," << outcome << "\n";
+	
 	return 0;
 }

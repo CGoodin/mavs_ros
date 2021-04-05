@@ -1,22 +1,24 @@
 <launch>
 
-  <arg name="scene_file_arg" default="/home/msucavs/mavs/data/scenes/forester_scene_less_trees_simple.json" />
-  <arg name="vehicle_file_arg" default="/home/msucavs/mavs/data/vehicles/rp3d_vehicles/mrzr4.json" />
+  <arg name="scene_file_arg" default="/mavs/data/scenes/forester_scene_less_trees_simple.json" />
+  <arg name="vehicle_file_arg" default="/mavs/data/vehicles/rp3d_vehicles/mrzr4.json" />
 
   <arg name="cmd_vel_topic_arg" default="avt_341/cmd_vel" />
   <arg name="point_cloud_topic_arg" default="avt_341/points" />
   <arg name="odometry_topic_arg" default="avt_341/odometry" />
+  <arg name="rain_rate_arg" default="0.0" />
+  <arg name="soil_strength_arg" />
+  <arg name="surface_type_arg" />
+  <arg name="trial_name_arg" />
 
   <node name="mavs_avt_vehcicle_node" pkg="mavs_avt_example" type="mavs_avt_vehicle_node" output="screen" required="true" >
     <remap from="mavs_avt/cmd_vel" to="$(arg cmd_vel_topic_arg)"/> 
     <remap from="mavs_avt/odometry" to="$(arg odometry_topic_arg)"/> 
     <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
-    <param name = "Initial_X_Position" value = "-50.0"/>
-    <param name = "Initial_Y_Position" value = "0.0"/>
-    <param name = "Initial_Heading" value = "0.0"/>
     <param name="scene_file" value="$(arg scene_file_arg)"/>
-    <param name = "soil_strength" value = "250"/> 
-    <param name = "surface_type" value = "dry"/>  
+    <param name = "soil_strength" value = "$(arg soil_strength_arg)"/> 
+    <param name = "surface_type" value = "$(arg surface_type_arg)" />  
+    <param name="trial_name" value="$(arg trial_name_arg)" />
   </node>
 
 
@@ -30,6 +32,7 @@
     <param name = "lidar_type" value = "OS1"/>
     <param name="blanking_dist" value="5.0" />
     <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name="rain_rate" value="$(arg rain_rate_arg)" />
   </node>
 
 
