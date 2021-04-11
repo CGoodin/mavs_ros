@@ -27,6 +27,37 @@ void TwistCallback(const geometry_msgs::Twist::ConstPtr &rcv_msg){
 	steering = rcv_msg->angular.z;
 }
 
+bool CheckRollover(mavs::vehicle::Rp3dVehicle *veh) {
+		glm::vec3 look_up = veh->GetLookUp();
+		if (look_up.z < 0.0f) {
+			std::cout << "VEHICLE ROLLED OVER" << std::endl;
+			// Next line will end the simulation
+			return true;
+		}
+		return false;
+	}
+
+bool CheckCollisions(mavs::vehicle::Rp3dVehicle *veh, mavs::environment::Environment *env) {
+	glm::vec3 veh_pos = veh->GetPosition();
+	// The offset of 2 is to account for the surface meshes, which don't line up with the bounding box list
+	for (int i = 0; i < env->GetNumberObjects()-2; i++) {
+		std::string label = env->GetLabel(env->GetObjectName(i));
+		// exclude some labels that we don't want to treat as obstacles
+		if (label != "" && label != "smooth trail" && label != "rough trail" && label != "vehicle" && label != "surface" && label != "pothole") {
+			mavs::raytracer::BoundingBox box = env->GetObjectBoundingBox(i+2);
+			glm::vec3 ll = box.GetLowerLeft();
+			glm::vec3 ur = box.GetUpperRight();
+			if (veh_pos.x > ll.x && veh_pos.x<ur.x && veh_pos.y>ll.y && veh_pos.y < ur.y) {
+				std::cout << "COLLISION WITH OBJECT " << i << ", Obj: "<< env->GetObjectName(i) << " ";
+				std::cout << ll.x << "," << ll.y << " " << ur.x << ", " << ur.y << " Veh: " << veh_pos.x << ", " << veh_pos.y << std::endl;
+				// Next line will end the simulation
+				return true;
+			} 
+		}
+	}
+	return false;
+}
+
 inline float GetHeadingFromOrientation(glm::quat orientation){
     tf::Quaternion q(
         orientation.x,
@@ -67,6 +98,14 @@ int main(int argc, char **argv){
 	}
 	else{
 		std::cerr << "ERROR: No scene file listed " << std::endl;
+	}
+
+	std::string condition;
+	if (ros::param::has("~condition")){
+		ros::param::get("~condition", condition);
+	}
+	else{
+		std::cerr << "ERROR: No trial name listed " << std::endl;
 	}
 
 	std::string trial_name;
@@ -149,8 +188,8 @@ int main(int argc, char **argv){
 
 	// Logging
 	std::ofstream experimentLogFile;
-	experimentLogFile.open("/cavs/projects/ARC/Project1.31/users/dwc2/2021casestudy/data/results/" + trial_name + "-experiment.csv", std::ios::out | std::ios::trunc);
-	experimentLogFile << "Time,PosX,PosY,Heading,Speed,Distance\n";
+	experimentLogFile.open("/cavs/projects/ARC/Project1.31/users/dwc2/2021casestudy/data/results/" + condition + "_" + trial_name + "-experiment.csv", std::ios::out | std::ios::trunc);
+	experimentLogFile << "Time,PosX,PosY,Heading,Speed,Distance,Throttle,Steering,Braking\n";
   	//experimentLogFileName = "../results/" + waypointFile.split('.')[0] + "-experiment.csv"
   	double distance_traveled = 0.0f;
 	float prev_x = x_init;
@@ -159,7 +198,8 @@ int main(int argc, char **argv){
 	double start_time = ros::Time::now().toSec();
 	uint64_t start_time_nSec = ros::Time::now().toNSec();
 	std::string outcome = "SUCCESS";
-	while (ros::ok()){
+	bool end_state = false;
+	while (ros::ok() && !end_state){
 		//vehicle state update
 		mavs_veh.Update(&env, throttle, steering, -braking, dt);
 		mavs::VehicleState veh_state = mavs_veh.GetState();
@@ -177,7 +217,27 @@ int main(int argc, char **argv){
 		prev_y = veh_y_;
 		double dtravel = sqrt(dtx*dtx + dty*dty);
 		distance_traveled = distance_traveled + dtravel;
-		experimentLogFile << ros::Time::now().toNSec() - start_time_nSec << "," << veh_x_ << "," << veh_y_ << "," << veh_heading_ << "," << veh_speed_ << "," << distance_traveled << "\n";
+
+		if(veh_speed_ > 0.0f) {
+			//std::cout << "Checking for rollovers and collisions" << std::endl;
+			if(CheckRollover(&mavs_veh)) {
+				outcome = "ROLLOVER";
+				end_state = true;
+			}
+			if(CheckCollisions(&mavs_veh, &env)) {
+				outcome = "COLLISION";
+				end_state = true;
+			}
+		} else if (veh_speed_ < 0.1f ){
+			outcome = "NEGATIVE SPEED";
+			end_state = true;
+		}
+		
+		if (ros::Time::now().toSec() - start_time > 600) {
+			outcome = "TIMEOUT";
+			end_state = true;
+		}
+		experimentLogFile << ros::Time::now().toNSec() - start_time_nSec << "," << veh_x_ << "," << veh_y_ << "," << veh_heading_ << "," << veh_speed_ << "," << distance_traveled << "," << throttle << "," << steering << "," << braking << "\n";
 		 
 
 		nav_msgs::Odometry true_odom = mavs_ros_utils::CopyFromMavsVehicleState(veh_state);
@@ -220,7 +280,7 @@ int main(int argc, char **argv){
 
 	experimentLogFile.close();
 	std::ofstream experimentResultsFile;
-	experimentResultsFile.open("/cavs/projects/ARC/Project1.31/users/dwc2/2021casestudy/data/results/case-study-results.csv", std::ios::out | std::ios::app);
+	experimentResultsFile.open("/cavs/projects/ARC/Project1.31/users/dwc2/2021casestudy/data/results/"+condition+"-case-study-results.csv", std::ios::out | std::ios::app);
 	experimentResultsFile << ros::Time::now().toSec() << ",";
     experimentResultsFile << trial_name << "," << soil_strength << "," << surface_type << "," << rain_rate << ",";
 	experimentResultsFile << x_init << "," << y_init << "," << prev_x << "," << prev_y << ",";

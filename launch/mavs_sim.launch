@@ -10,7 +10,8 @@
   <arg name="soil_strength_arg" />
   <arg name="surface_type_arg" />
   <arg name="trial_name_arg" />
-
+  <arg name="condition_arg" />
+  
   <node name="mavs_avt_vehcicle_node" pkg="mavs_avt_example" type="mavs_avt_vehicle_node" output="screen" required="true" >
     <remap from="mavs_avt/cmd_vel" to="$(arg cmd_vel_topic_arg)"/> 
     <remap from="mavs_avt/odometry" to="$(arg odometry_topic_arg)"/> 
@@ -19,6 +20,7 @@
     <param name = "soil_strength" value = "$(arg soil_strength_arg)"/> 
     <param name = "surface_type" value = "$(arg surface_type_arg)" />  
     <param name="trial_name" value="$(arg trial_name_arg)" />
+    <param name="condition" value="$(arg condition_arg)" />
   </node>
 
 
