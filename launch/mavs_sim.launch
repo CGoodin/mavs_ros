@@ -21,6 +21,7 @@
     <param name = "surface_type" value = "$(arg surface_type_arg)" />  
     <param name="trial_name" value="$(arg trial_name_arg)" />
     <param name="condition" value="$(arg condition_arg)" />
+    <param name="num_rays" value="100" />
   </node>
 
 
@@ -35,6 +36,7 @@
     <param name="blanking_dist" value="5.0" />
     <param name="scene_file" value="$(arg scene_file_arg)"/>
     <param name="rain_rate" value="$(arg rain_rate_arg)" />
+    <param name="condition" value="$(arg condition_arg)" />
   </node>
 
 

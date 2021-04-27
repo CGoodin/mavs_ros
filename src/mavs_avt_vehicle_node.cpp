@@ -92,6 +92,12 @@ int main(int argc, char **argv){
 		clock_pub = n.advertise<rosgraph_msgs::Clock>("clock", 1);
 	}
 
+	int num_rays = 10;
+	if (ros::param::has("~num_rays")) {
+		ros::param::get("~num_rays", num_rays);
+	} else {
+		std::cerr << "ERROR: Number of rays not listed" << std::endl;
+	}
 	std::string scene_file;
 	if (ros::param::has("~scene_file")){
 		ros::param::get("~scene_file", scene_file);
@@ -156,6 +162,12 @@ int main(int argc, char **argv){
 	}
 
 	mavs::environment::Environment env;
+	if (rain_rate > 0.0){
+		env.SetRainRate(rain_rate);
+		float wx = mavs::math::rand_in_range(-3.0f, 3.0f);
+		float wy = mavs::math::rand_in_range(-3.0f, 3.0f);
+		env.SetWind(wx, wy);
+	}
 
 	mavs::raytracer::embree::EmbreeTracer scene;
 	scene.Load(scene_file); //, rand_seed);
@@ -198,12 +210,41 @@ int main(int argc, char **argv){
 	double start_time = ros::Time::now().toSec();
 	uint64_t start_time_nSec = ros::Time::now().toNSec();
 	std::string outcome = "SUCCESS";
+	float sum_throttle = 0.0f;
 	bool end_state = false;
+/*
+	mavs::sensor::camera::PathTracerCamera camera;
+    camera.Initialize(1024, 576, 0.006222f, 0.0035f, 0.0035f);
+    camera.SetNumIterations(num_rays);
+    camera.SetMaxDepth(10);
+    camera.SetRRVal(0.55);
+    camera.SetExposureTime(1.0f / 500.0f);
+    camera.TurnOffPixelSmoothing();
+	glm::vec3 cam_offset(-10.0, 0.0, 2.0);
+	camera.SetRelativePose(cam_offset, relor);
+*/
+	int loop_ctr = 0;
+	int frame_ctr = 0;
+	std::ostringstream oss;
 	while (ros::ok() && !end_state){
 		//vehicle state update
 		mavs_veh.Update(&env, throttle, steering, -braking, dt);
 		mavs::VehicleState veh_state = mavs_veh.GetState();
 
+/*
+		loop_ctr = loop_ctr + 1;
+		if (loop_ctr % 10 == 0) {
+			camera.SetPose(veh_state);
+			camera.Update(&env, 0.033);
+			oss.str("");
+			oss << std::setw(4) << std::setfill('0') << frame_ctr;
+			std::cout << "Filename: " << trial_name << "-" << oss.str() << ".bmp" << std::endl;
+			camera.SaveImage("/scratch/dwc2/casestudy2021/" + condition + "-" + trial_name + "-" + oss.str() + ".bmp");
+			frame_ctr++;
+			camera.Display();
+			loop_ctr = 0;
+		}
+*/
 		// save state data: Time,PosX,PosY,Heading-Rad,Speed,DistanceTraveled
 		float veh_x_ = veh_state.pose.position.x;
 		float veh_y_ = veh_state.pose.position.y;
@@ -218,8 +259,12 @@ int main(int argc, char **argv){
 		double dtravel = sqrt(dtx*dtx + dty*dty);
 		distance_traveled = distance_traveled + dtravel;
 
-		if(veh_speed_ > 0.0f) {
-			//std::cout << "Checking for rollovers and collisions" << std::endl;
+		if(veh_x_ < 0.0f || veh_x_ > 1000.0f || veh_y_ < 0.0f || veh_y_ > 1000.0f) {
+			outcome = "OFFMAP";
+			end_state = true;
+		} 
+		/*
+		else if(veh_speed_ > 0.0f) {
 			if(CheckRollover(&mavs_veh)) {
 				outcome = "ROLLOVER";
 				end_state = true;
@@ -232,13 +277,14 @@ int main(int argc, char **argv){
 			outcome = "NEGATIVE SPEED";
 			end_state = true;
 		}
+		*/
 		
 		if (ros::Time::now().toSec() - start_time > 600) {
 			outcome = "TIMEOUT";
 			end_state = true;
 		}
 		experimentLogFile << ros::Time::now().toNSec() - start_time_nSec << "," << veh_x_ << "," << veh_y_ << "," << veh_heading_ << "," << veh_speed_ << "," << distance_traveled << "," << throttle << "," << steering << "," << braking << "\n";
-		 
+		sum_throttle = sum_throttle + throttle;
 
 		nav_msgs::Odometry true_odom = mavs_ros_utils::CopyFromMavsVehicleState(veh_state);
 
@@ -284,7 +330,7 @@ int main(int argc, char **argv){
 	experimentResultsFile << ros::Time::now().toSec() << ",";
     experimentResultsFile << trial_name << "," << soil_strength << "," << surface_type << "," << rain_rate << ",";
 	experimentResultsFile << x_init << "," << y_init << "," << prev_x << "," << prev_y << ",";
-	experimentResultsFile << tot_time << "," << elapsed_time << "," << distance_traveled << "," << outcome << "\n";
+	experimentResultsFile << tot_time << "," << elapsed_time << "," << distance_traveled << "," << outcome << "," << sum_throttle << "\n";
 	
 	return 0;
 }
