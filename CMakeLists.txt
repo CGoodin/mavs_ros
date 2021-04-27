@@ -5,8 +5,8 @@ add_definitions(-DUSE_OMP)
 add_definitions(-DUSE_EMBREE)
 
 ##Modify these to the appropriate paths
-#SET(mavs_INCLUDE_DIR  "/home/msucavs/mavs/src/")
-#SET(mavs_LIB_DIR  "/home/msucavs/mavs/build/lib")
+SET(mavs_INCLUDE_DIR  "/usr/local/include")
+SET(mavs_LIB_DIR  "/usr/local/lib")
 
 find_package(MAVS REQUIRED)
 
