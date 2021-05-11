@@ -1,7 +1,6 @@
 <launch>
-
-  <arg name="scene_file_arg" default="/home/msucavs/mavs/data/scenes/forester_scene_less_trees_simple.json" />
-  <arg name="vehicle_file_arg" default="/home/msucavs/mavs/data/vehicles/rp3d_vehicles/mrzr4.json" />
+ <arg name="scene_file_arg" default="/home/msucavs/mavs/data/scenes/forester_scene_less_trees_simple.json" /> 
+  <arg name="vehicle_file_arg" default="/home/msucavs/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires.json" />
 
   <arg name="cmd_vel_topic_arg" default="avt_341/cmd_vel" />
   <arg name="point_cloud_topic_arg" default="avt_341/points" />
@@ -11,6 +10,7 @@
     <remap from="mavs_avt/cmd_vel" to="$(arg cmd_vel_topic_arg)"/> 
     <remap from="mavs_avt/odometry" to="$(arg odometry_topic_arg)"/> 
     <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name= "debug_camera" value="true" />
     <param name = "Initial_X_Position" value = "-50.0"/>
     <param name = "Initial_Y_Position" value = "0.0"/>
     <param name = "Initial_Heading" value = "0.0"/>
@@ -22,7 +22,6 @@
 
   <node name="mavs_avt_sensors_node" pkg="mavs_avt_example" type="mavs_avt_sensors_node" output="screen" required="true" >
     <remap from="mavs_avt/point_cloud2" to="$(arg point_cloud_topic_arg)"/> 
-    <param name= "debug_camera" value="true" />
     <param name= "use_lidar" value="true" />
     <param name= "display_lidar" value="true" />
     <param name= "register_lidar" value="true" />
