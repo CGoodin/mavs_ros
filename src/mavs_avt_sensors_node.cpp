@@ -65,10 +65,6 @@ int main(int argc, char **argv){
 	if (ros::param::has("~use_lidar")){
 		ros::param::get("~use_lidar", use_lidar);
 	}
-	bool render_debug = false;
-	if (ros::param::has("~debug_camera")){
-		ros::param::get("~debug_camera", render_debug);
-	}
 	bool display_lidar = false;
 	if (ros::param::has("~display_lidar")){
 		ros::param::get("~display_lidar", display_lidar);
@@ -130,18 +126,11 @@ int main(int argc, char **argv){
 	scene.TurnOffLabeling();
 	env.SetRaytracer(&scene);
 
-	mavs::vehicle::Rp3dVehicle mavs_veh;
-	if (render_debug){
-		mavs_veh.Load(rp3d_vehicle_file);
-		mavs_veh.SetPosition(0.0, 0.0, 1.0);
-		mavs_veh.SetOrientation(1.0, 0.0, 0.0, 0.0);
-		mavs_veh.Update(&env, 0.0, 0.0, 1.0, 0.00001);
-	}
-
 	glm::vec3 offset(0.0f, 0.0f, 1.35f);
 	glm::vec3 origin(0.0f, 0.0f, 0.f);
 	glm::quat relor(1.0f, 0.0f, 0.0f, 0.0f);
 
+<<<<<<< HEAD
 /*
 	mavs::sensor::camera::PathTracerCamera camera;
     camera.Initialize(1024, 576, 0.006222f, 0.0035f, 0.0035f);
@@ -157,6 +146,8 @@ int main(int argc, char **argv){
 	glm::vec3 cam_offset(-10.0, 0.0, 2.0);
 	camera.SetRelativePose(cam_offset, relor);
 
+=======
+>>>>>>> master
 	mavs::sensor::lidar::Lidar *lidar;
 
 	if (lidar_type == "OS1"){
@@ -200,6 +191,7 @@ int main(int argc, char **argv){
 	while (ros::ok()){
 
 		env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
+<<<<<<< HEAD
 	
 	
 		if (render_debug){
@@ -214,6 +206,9 @@ int main(int argc, char **argv){
 			frame_ctr++;
 		}
 	
+=======
+
+>>>>>>> master
 		double t0 = omp_get_wtime();
 		env.AdvanceParticleSystems(0.1);
 

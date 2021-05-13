@@ -150,6 +150,11 @@ int main(int argc, char **argv){
 		ros::param::get("~Initial_Heading", heading_init);
 	}
 
+	bool render_debug = false;
+	if (ros::param::has("~debug_camera")){
+		ros::param::get("~debug_camera", render_debug);
+	}
+
 	glm::vec3 initial_position(x_init, y_init, 1.0f);
 	glm::quat initial_orientation(cos(0.5 * heading_init), 0.0f, 0.0f, sin(0.5 * heading_init));
 	std::string rp3d_vehicle_file;
@@ -193,9 +198,15 @@ int main(int argc, char **argv){
 	mavs_veh.SetOrientation(initial_orientation.w, initial_orientation.x, initial_orientation.y, initial_orientation.z);
 	mavs_veh.Update(&env, throttle, steering, braking, 0.00001);
 
+	mavs::sensor::camera::RgbCamera camera;
+	camera.Initialize(128, 128, 0.0035, 0.0035, 0.0035);
+	camera.SetRenderShadows(false);
+	glm::vec3 cam_offset(-10.0, 0.0, 2.0);
+	camera.SetRelativePose(cam_offset, relor);
+
 	double dt = 0.01;
 	ros::Rate rate(1.0 / dt);
-
+	int nsteps = 0;
 	double elapsed_time = 0.0;
 
 	// Logging
@@ -288,6 +299,12 @@ int main(int argc, char **argv){
 
 		nav_msgs::Odometry true_odom = mavs_ros_utils::CopyFromMavsVehicleState(veh_state);
 
+		if (render_debug && nsteps%10==0){
+			camera.SetPose(veh_state);
+			camera.Update(&env, 0.033);
+			camera.Display();
+		}
+
 		//piksi update
 		piksi.SetPose(veh_state);
 		piksi.Update(&env, 0.01);
@@ -317,6 +334,7 @@ int main(int argc, char **argv){
 			rate.sleep();
 		}
 		elapsed_time += dt;
+		nsteps++;
 		ros::spinOnce();
 	} //while ros OK
 
