@@ -71,6 +71,7 @@ inline float GetHeadingFromOrientation(glm::quat orientation){
 }
 
 int main(int argc, char **argv){
+	std::cout << "Vehicle Node: Starting up the node" << std::endl;
 	//- Create the node and subscribers ---//
 	ros::init(argc, argv, "mavs_avt_vehicle_node");
 	ros::NodeHandle n;
@@ -166,6 +167,8 @@ int main(int argc, char **argv){
 		exit(1);
 	}
 
+	std::cout << "Vehicle Node: Loaded Parameters : init-pose: (" << x_init << ", " << y_init << ")" << std::endl;
+
 	mavs::environment::Environment env;
 	if (rain_rate > 0.0){
 		env.SetRainRate(rain_rate);
@@ -192,14 +195,17 @@ int main(int argc, char **argv){
 	piksi.SetWarmupTime(660.0f);
 	piksi.SetRelativePose(origin, relor);
 
+	std::cout << "Vehicle Node: Loading Vehicle: " << rp3d_vehicle_file << std::endl;
+
 	mavs::vehicle::Rp3dVehicle mavs_veh;
 	mavs_veh.Load(rp3d_vehicle_file);
 	mavs_veh.SetPosition(initial_position.x, initial_position.y, initial_position.z);
 	mavs_veh.SetOrientation(initial_orientation.w, initial_orientation.x, initial_orientation.y, initial_orientation.z);
 	mavs_veh.Update(&env, throttle, steering, braking, 0.00001);
 
+	std::cout << "Vehicle Node: Creating Camera" << std::endl;
 	mavs::sensor::camera::RgbCamera camera;
-	camera.Initialize(128, 128, 0.0035, 0.0035, 0.0035);
+	camera.Initialize(256, 256, 0.0035, 0.0035, 0.0035);
 	camera.SetRenderShadows(false);
 	glm::vec3 cam_offset(-10.0, 0.0, 2.0);
 	camera.SetRelativePose(cam_offset, relor);
@@ -209,6 +215,7 @@ int main(int argc, char **argv){
 	int nsteps = 0;
 	double elapsed_time = 0.0;
 
+	std::cout << "Vehicle Node: Setting up Experiment Logging" << std::endl;
 	// Logging
 	std::ofstream experimentLogFile;
 	experimentLogFile.open("/cavs/projects/ARC/Project1.31/users/dwc2/2021casestudy/data/results/" + condition + "_" + trial_name + "-experiment.csv", std::ios::out | std::ios::trunc);
@@ -238,6 +245,7 @@ int main(int argc, char **argv){
 	int frame_ctr = 0;
 	std::ostringstream oss;
 	while (ros::ok() && !end_state){
+	 	std::cout << "Vehicle Node: Starting the loop" << std::endl;
 		//vehicle state update
 		mavs_veh.Update(&env, throttle, steering, -braking, dt);
 		mavs::VehicleState veh_state = mavs_veh.GetState();
@@ -257,6 +265,7 @@ int main(int argc, char **argv){
 		}
 */
 		// save state data: Time,PosX,PosY,Heading-Rad,Speed,DistanceTraveled
+		//std::cout << "Vehicle Node: Log Vehicle Data" << std::endl;
 		float veh_x_ = veh_state.pose.position.x;
 		float veh_y_ = veh_state.pose.position.y;
 		float vx = veh_state.twist.linear.x;
@@ -270,6 +279,7 @@ int main(int argc, char **argv){
 		double dtravel = sqrt(dtx*dtx + dty*dty);
 		distance_traveled = distance_traveled + dtravel;
 
+		//std::cout << "Vehicle Node: Check vehicle position: " << veh_x_ << ", " << veh_y_ << " : " << end_state << std::endl;
 		if(veh_x_ < 0.0f || veh_x_ > 1000.0f || veh_y_ < 0.0f || veh_y_ > 1000.0f) {
 			outcome = "OFFMAP";
 			end_state = true;
@@ -289,7 +299,7 @@ int main(int argc, char **argv){
 			end_state = true;
 		}
 		*/
-		
+		std::cout << "Vehicle Node: Check for timeout: " << ros::Time::now().toSec() - start_time << std::endl;
 		if (ros::Time::now().toSec() - start_time > 600) {
 			outcome = "TIMEOUT";
 			end_state = true;
@@ -297,14 +307,17 @@ int main(int argc, char **argv){
 		experimentLogFile << ros::Time::now().toNSec() - start_time_nSec << "," << veh_x_ << "," << veh_y_ << "," << veh_heading_ << "," << veh_speed_ << "," << distance_traveled << "," << throttle << "," << steering << "," << braking << "\n";
 		sum_throttle = sum_throttle + throttle;
 
+		//std::cout << "Vehicle Node: Update Odometry" << std::endl;
 		nav_msgs::Odometry true_odom = mavs_ros_utils::CopyFromMavsVehicleState(veh_state);
 
 		if (render_debug && nsteps%10==0){
+			std::cout << "Vehicle Node: Render camera at " << nsteps << std::endl;
 			camera.SetPose(veh_state);
 			camera.Update(&env, 0.033);
 			camera.Display();
 		}
 
+		
 		//piksi update
 		piksi.SetPose(veh_state);
 		piksi.Update(&env, 0.01);
@@ -323,6 +336,7 @@ int main(int argc, char **argv){
 
 		odom_true.publish(true_odom);
 
+		//std::cout << "Vehicle Node: Update clock" << std::endl;
 		//clock update
 		if (use_sim_time){
 			ros::Time now(elapsed_time);
@@ -333,11 +347,14 @@ int main(int argc, char **argv){
 		else{
 			rate.sleep();
 		}
+		//std::cout << "Vehicle Node: Update stuff" << std::endl;
 		elapsed_time += dt;
 		nsteps++;
 		ros::spinOnce();
+		//std::cout << "Vehicle Node: End of the loop" << std::endl;
 	} //while ros OK
 
+	//std::cout << "Vehicle Node: Exited the loop" << std::endl;
 	double tot_time = ros::Time::now().toSec() - start_time;
 	if (use_sim_time)
 		tot_time = elapsed_time;
