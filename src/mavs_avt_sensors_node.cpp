@@ -130,21 +130,6 @@ int main(int argc, char **argv){
 	glm::vec3 origin(0.0f, 0.0f, 0.f);
 	glm::quat relor(1.0f, 0.0f, 0.0f, 0.0f);
 
-/*
-	mavs::sensor::camera::PathTracerCamera camera;
-    camera.Initialize(1024, 576, 0.006222f, 0.0035f, 0.0035f);
-    camera.SetNumIterations(1);
-    camera.SetMaxDepth(10);
-    camera.SetRRVal(0.55);
-    camera.SetExposureTime(1.0f / 500.0f);
-    camera.TurnOffPixelSmoothing();
-*/
-    mavs::sensor::camera::RgbCamera camera;
-	camera.Initialize(512, 512, 0.0035, 0.0035, 0.0035);
-	camera.SetRenderShadows(false);
-	glm::vec3 cam_offset(-10.0, 0.0, 2.0);
-	camera.SetRelativePose(cam_offset, relor);
-
 	mavs::sensor::lidar::Lidar *lidar;
 
 	if (lidar_type == "OS1"){
@@ -183,25 +168,9 @@ int main(int argc, char **argv){
 	int nscans = 0;
 	double elapsed_time = 0.0;
 	double start_time = ros::Time::now().toSec();
-	int frame_ctr = 0;
-	std::ostringstream oss;
 	while (ros::ok()){
 
 		env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
-	
-	
-		if (render_debug){
-			camera.SetPose(veh_state);
-			camera.Update(&env, 0.033);
-			camera.Display();
-			oss.str("");
-			oss << condition << "-image-";
-			oss << std::setw(4) << std::setfill('0') << frame_ctr << ".bmp";
-			std::cout << oss.str() << std::endl;
-			camera.SaveImage("/scratch/dwc2/casestudy2021/" + oss.str());
-			frame_ctr++;
-		}
-	
 		double t0 = omp_get_wtime();
 		env.AdvanceParticleSystems(0.1);
 
