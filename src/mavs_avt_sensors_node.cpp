@@ -130,7 +130,6 @@ int main(int argc, char **argv){
 	glm::vec3 origin(0.0f, 0.0f, 0.f);
 	glm::quat relor(1.0f, 0.0f, 0.0f, 0.0f);
 
-<<<<<<< HEAD
 /*
 	mavs::sensor::camera::PathTracerCamera camera;
     camera.Initialize(1024, 576, 0.006222f, 0.0035f, 0.0035f);
@@ -146,8 +145,6 @@ int main(int argc, char **argv){
 	glm::vec3 cam_offset(-10.0, 0.0, 2.0);
 	camera.SetRelativePose(cam_offset, relor);
 
-=======
->>>>>>> master
 	mavs::sensor::lidar::Lidar *lidar;
 
 	if (lidar_type == "OS1"){
@@ -191,7 +188,6 @@ int main(int argc, char **argv){
 	while (ros::ok()){
 
 		env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
-<<<<<<< HEAD
 	
 	
 		if (render_debug){
@@ -206,9 +202,6 @@ int main(int argc, char **argv){
 			frame_ctr++;
 		}
 	
-=======
-
->>>>>>> master
 		double t0 = omp_get_wtime();
 		env.AdvanceParticleSystems(0.1);
 

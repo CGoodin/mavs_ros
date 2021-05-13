@@ -1,12 +1,6 @@
 <launch>
-<<<<<<< HEAD
-
-  <arg name="scene_file_arg" default="/mavs/data/scenes/forester_scene_less_trees_simple.json" />
-  <arg name="vehicle_file_arg" default="/mavs/data/vehicles/rp3d_vehicles/mrzr4.json" />
-=======
  <arg name="scene_file_arg" default="/home/msucavs/mavs/data/scenes/forester_scene_less_trees_simple.json" /> 
   <arg name="vehicle_file_arg" default="/home/msucavs/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires.json" />
->>>>>>> master
 
   <arg name="cmd_vel_topic_arg" default="avt_341/cmd_vel" />
   <arg name="point_cloud_topic_arg" default="avt_341/points" />
@@ -21,14 +15,11 @@
     <remap from="mavs_avt/cmd_vel" to="$(arg cmd_vel_topic_arg)"/> 
     <remap from="mavs_avt/odometry" to="$(arg odometry_topic_arg)"/> 
     <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
-<<<<<<< HEAD
-=======
     <param name= "debug_camera" value="true" />
     <param name = "Initial_X_Position" value = "-50.0"/>
     <param name = "Initial_Y_Position" value = "0.0"/>
     <param name = "Initial_Heading" value = "0.0"/>
->>>>>>> master
-    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name = "scene_file" value="$(arg scene_file_arg)"/>
     <param name = "soil_strength" value = "$(arg soil_strength_arg)"/> 
     <param name = "surface_type" value = "$(arg surface_type_arg)" />  
     <param name="trial_name" value="$(arg trial_name_arg)" />
