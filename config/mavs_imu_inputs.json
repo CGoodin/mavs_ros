@@ -1,0 +1,17 @@
+{
+  "Gyroscope":{
+	  "Offsets": [0.01, 0.01, -0.01],
+    "Noise": [ 0.03, 0.01, 0.02 ],
+    "Subtract G":  false
+  },
+
+  "Accelerometer": {
+    "Offsets": [ -0.35, 0.53, -0.03 ],
+    "Noise": [ 0.35, 0.40, 0.65 ]
+  },
+
+  "Magnetometer": {
+    "Offsets": [ 0.0, 0.0, 0.0 ],
+    "Noise": [ 0.0, 0.0, 0.0 ]
+  }
+}

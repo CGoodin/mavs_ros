@@ -1,6 +1,6 @@
 <launch>
- <arg name="scene_file_arg" default="/home/msucavs/mavs/data/scenes/forester_scene_less_trees_simple.json" /> 
-  <arg name="vehicle_file_arg" default="/home/msucavs/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires.json" />
+ <arg name="scene_file_arg" default="/home/cgoodin/mavs/data/scenes/forester_scene_less_trees_simple.json" /> 
+  <arg name="vehicle_file_arg" default="/home/cgoodin/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires.json" />
 
   <arg name="cmd_vel_topic_arg" default="avt_341/cmd_vel" />
   <arg name="point_cloud_topic_arg" default="avt_341/points" />
@@ -17,8 +17,10 @@
     <param name="scene_file" value="$(arg scene_file_arg)"/>
     <param name = "soil_strength" value = "250"/> 
     <param name = "surface_type" value = "dry"/>  
+    <param name= "publish_imu" value="true" />
+    <param name = "imu_input_file" value = "$(find mavs_avt_example)/config/mavs_imu_inputs.json" />
+    <param name= "use_human_driver" value="true" />
   </node>
-
 
   <node name="mavs_avt_sensors_node" pkg="mavs_avt_example" type="mavs_avt_sensors_node" output="screen" required="true" >
     <remap from="mavs_avt/point_cloud2" to="$(arg point_cloud_topic_arg)"/> 

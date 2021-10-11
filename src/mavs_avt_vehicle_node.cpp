@@ -6,6 +6,7 @@
 #include "nav_msgs/Odometry.h"
 #include "geometry_msgs/Twist.h"
 #include "rosgraph_msgs/Clock.h"
+#include "sensor_msgs/Imu.h"
 #include <std_msgs/Int64.h>
 #include <tf/transform_broadcaster.h>
 // local includes
@@ -34,9 +35,8 @@ int main(int argc, char **argv){
 	ros::Subscriber twist_sub = n.subscribe("mavs_avt/cmd_vel", 1, TwistCallback);
 
 	ros::Publisher odom_true = n.advertise<nav_msgs::Odometry>("mavs_avt/odometry_true", 10);
-	ros::Publisher rtk_pub;
-
-	rtk_pub = n.advertise<nav_msgs::Odometry>("mavs_avt/odometry", 1);
+	ros::Publisher rtk_pub = n.advertise<nav_msgs::Odometry>("mavs_avt/odometry", 10);
+	ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("mavs_avt/imu", 10);
 
 	//--- get parameters ---//
 	bool use_sim_time = false;
@@ -80,6 +80,23 @@ int main(int argc, char **argv){
 	bool render_debug = false;
 	if (ros::param::has("~debug_camera")){
 		ros::param::get("~debug_camera", render_debug);
+	}
+
+	bool publish_imu = false;
+	if (ros::param::has("~publish_imu")){
+		ros::param::get("~publish_imu", publish_imu);
+	}
+
+	bool use_human_driver = false;
+	if (ros::param::has("~use_human_driver")){
+		ros::param::get("~use_human_driver", use_human_driver);
+	}
+
+	mavs::sensor::imu::ImuSimple imu;
+	if (ros::param::has("~imu_input_file")){
+		std::string imu_input_file;
+		ros::param::get("~imu_input_file", imu_input_file);
+		imu.Load(imu_input_file);
 	}
 
 	glm::vec3 initial_position(x_init, y_init, 1.0f);
@@ -133,6 +150,24 @@ int main(int argc, char **argv){
 	double start_time = ros::Time::now().toSec();
 	while (ros::ok()){
 		//vehicle state update
+		if (use_human_driver){
+			throttle = 0.0;
+			steering = 0.0;
+			braking = 0.0;
+			std::vector<bool> driving_commands = camera.GetKeyCommands();
+			if (driving_commands[0]) {
+				throttle = 1.0;
+			}
+			else if (driving_commands[1]) {
+				braking = -1.0;
+			}
+			if (driving_commands[2]) {
+				steering = 1.0;
+			}
+			else if (driving_commands[3]) {
+				steering = -1.0;
+			}
+		}
 		mavs_veh.Update(&env, throttle, steering, -braking, dt);
 		mavs::VehicleState veh_state = mavs_veh.GetState();
 
@@ -142,6 +177,24 @@ int main(int argc, char **argv){
 			camera.SetPose(veh_state);
 			camera.Update(&env, 0.033);
 			camera.Display();
+		}
+
+		// imu update
+		if (publish_imu){
+			imu.SetPose(veh_state);
+			imu.Update(&env, 0.01);
+			glm::vec3 accel = imu.GetAcceleration();
+			glm::vec3 angvel = imu.GetAngularVelocity();
+			sensor_msgs::Imu imu_msg;
+			imu_msg.header.stamp = ros::Time::now();
+			imu_msg.header.frame_id = "odom";
+			imu_msg.angular_velocity.x = angvel.x;
+			imu_msg.angular_velocity.y = angvel.y;
+			imu_msg.angular_velocity.z = angvel.z;
+			imu_msg.linear_acceleration.x = accel.x;
+			imu_msg.linear_acceleration.y = accel.y;
+			imu_msg.linear_acceleration.z = accel.z;
+			imu_pub.publish(imu_msg);
 		}
 
 		//piksi update
