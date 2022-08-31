@@ -1,6 +1,6 @@
 <launch>
  <arg name="scene_file_arg" default="/home/cgoodin/mavs/data/scenes/forester_scene_less_trees_simple.json" /> 
-  <arg name="vehicle_file_arg" default="/home/cgoodin/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires.json" />
+  <arg name="vehicle_file_arg" default="/home/cgoodin/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
 
   <arg name="cmd_vel_topic_arg" default="avt_341/cmd_vel" />
   <arg name="point_cloud_topic_arg" default="avt_341/points" />
