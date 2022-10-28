@@ -28,15 +28,15 @@ void TwistCallback(const geometry_msgs::Twist::ConstPtr &rcv_msg){
 
 int main(int argc, char **argv){
 	//- Create the node and subscribers ---//
-	ros::init(argc, argv, "mavs_avt_vehicle_node");
+	ros::init(argc, argv, "mavs_vehicle_node");
 	ros::NodeHandle n;
 
 	ros::Publisher clock_pub;
-	ros::Subscriber twist_sub = n.subscribe("mavs_avt/cmd_vel", 1, TwistCallback);
+	ros::Subscriber twist_sub = n.subscribe("mavs_ros/cmd_vel", 1, TwistCallback);
 
-	ros::Publisher odom_true = n.advertise<nav_msgs::Odometry>("mavs_avt/odometry_true", 10);
-	ros::Publisher rtk_pub = n.advertise<nav_msgs::Odometry>("mavs_avt/odometry", 10);
-	ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("mavs_avt/imu", 10);
+	ros::Publisher odom_true = n.advertise<nav_msgs::Odometry>("mavs_ros/odometry_true", 10);
+	ros::Publisher rtk_pub = n.advertise<nav_msgs::Odometry>("mavs_ros/odometry", 10);
+	ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("mavs_ros/imu", 10);
 
 	//--- get parameters ---//
 	bool use_sim_time = false;

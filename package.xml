@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mavs_avt_example</name>
+  <name>mavs_ros</name>
   <version>0.0.0</version>
-  <description>The mavs_avt_example package</description>
+  <description>The mavs_ros package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(mavs_avt_example)
+project(mavs_ros)
 
 add_definitions(-DUSE_OMP)
 add_definitions(-DUSE_EMBREE)
@@ -49,8 +49,8 @@ link_directories(
   ${PCL_LIBRARY_DIRS} 
 )
 
-add_executable(mavs_avt_vehicle_node src/mavs_avt_vehicle_node.cpp src/mavs_ros_utils.cpp)
-target_link_libraries(mavs_avt_vehicle_node
+add_executable(mavs_vehicle_node src/mavs_vehicle_node.cpp src/mavs_ros_utils.cpp)
+target_link_libraries(mavs_vehicle_node
   ${catkin_LIBRARIES}
   X11
   gomp
@@ -58,8 +58,8 @@ target_link_libraries(mavs_avt_vehicle_node
   ${EMBREE_LIBRARY}
 )
 
-add_executable(mavs_avt_sensors_node src/mavs_avt_sensors_node.cpp src/mavs_ros_utils.cpp)
-target_link_libraries(mavs_avt_sensors_node
+add_executable(mavs_sensors_node src/mavs_sensors_node.cpp src/mavs_ros_utils.cpp)
+target_link_libraries(mavs_sensors_node
   ${catkin_LIBRARIES}
   X11
   gomp
@@ -69,8 +69,8 @@ target_link_libraries(mavs_avt_sensors_node
 
 ## Mark executables for installation
 install(TARGETS 
-  mavs_avt_vehicle_node
-  mavs_avt_sensors_node
+  mavs_vehicle_node
+  mavs_sensors_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )

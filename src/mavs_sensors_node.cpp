@@ -38,13 +38,13 @@ void OdomCallback(const nav_msgs::Odometry::ConstPtr& rcv_odom){
 
 int main(int argc, char **argv){
 	//- Create the node and subscribers ---//
-	ros::init(argc, argv, "mavs_avt_sensors_node");
+	ros::init(argc, argv, "mavs_sensors_node");
 	ros::NodeHandle n;
 
 	ros::Publisher clock_pub;
 
-	ros::Subscriber odom_sub = n.subscribe("mavs_avt/odometry_true", 1, OdomCallback);
-	ros::Publisher lidar_pub = n.advertise<sensor_msgs::PointCloud2>("mavs_avt/point_cloud2", 1);
+	ros::Subscriber odom_sub = n.subscribe("mavs_ros/odometry_true", 1, OdomCallback);
+	ros::Publisher lidar_pub = n.advertise<sensor_msgs::PointCloud2>("mavs_ros/point_cloud2", 1);
 
 	std::string scene_file;
 	if (ros::param::has("~scene_file")){
