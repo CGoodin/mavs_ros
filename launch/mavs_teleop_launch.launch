@@ -1,0 +1,30 @@
+<launch>
+ <arg name="scene_file_arg" default="/home/cgoodin/mavs/data/scenes/forester_scene_less_trees_simple.json" /> 
+  <arg name="vehicle_file_arg" default="/home/cgoodin/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
+
+
+
+  <node name="mavs_vehcicle_node" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name= "debug_camera" value="true" />
+    <param name = "Initial_X_Position" value = "-10.0"/>
+    <param name = "Initial_Y_Position" value = "0.0"/>
+    <param name = "Initial_Heading" value = "0.0"/>
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name = "soil_strength" value = "250"/> 
+    <param name = "surface_type" value = "dry"/>  
+    <param name= "publish_imu" value="true" />
+    <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
+    <param name= "use_human_driver" value="true" />
+  </node>
+
+  <node name="sim_manager_node" pkg="mavs_ros" type="sim_manager_node" output="screen" required="true" >
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name = "timeout" value = "500.0"/> 
+    <param name = "upper_x_limit" value = "50.0"/> 
+    <param name = "upper_y_limit" value = "50.0"/> 
+    <param name = "lower_x_limit" value = "-50.0"/> 
+    <param name = "lower_y_limit" value = "-50.0"/> 
+  </node>
+
+</launch>

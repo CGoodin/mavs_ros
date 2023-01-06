@@ -67,10 +67,21 @@ target_link_libraries(mavs_sensors_node
   ${EMBREE_LIBRARY}
 )
 
+add_executable(sim_manager_node src/sim_manager_node.cpp)
+target_link_libraries(sim_manager_node
+  ${catkin_LIBRARIES}
+  X11
+  gomp
+  MAVS::mavs 
+  ${EMBREE_LIBRARY}
+)
+
+
 ## Mark executables for installation
 install(TARGETS 
   mavs_vehicle_node
   mavs_sensors_node
+  sim_manager_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
