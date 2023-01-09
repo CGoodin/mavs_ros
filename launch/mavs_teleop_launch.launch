@@ -25,6 +25,8 @@
     <param name = "upper_y_limit" value = "50.0"/> 
     <param name = "lower_x_limit" value = "-50.0"/> 
     <param name = "lower_y_limit" value = "-50.0"/> 
+    <param name = "min_obs_height" value = "0.65"/> 
+    <param name = "truth_map_res" value = "0.2"/> 
   </node>
 
 </launch>

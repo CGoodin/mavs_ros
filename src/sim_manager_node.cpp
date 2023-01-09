@@ -14,14 +14,13 @@ void OdomCallback(const nav_msgs::Odometry::ConstPtr& rcv_odom){
 	rcvd_odom = true;
 }
 
+
 bool Collision(mavs::OccupancyGrid *grid, float px, float py){
 	int i = (int)floor((px - grid->info.origin.position.x)/grid->info.resolution);
 	int j = (int)floor((py - grid->info.origin.position.y)/grid->info.resolution);
 	
-	//int n = i*grid->info.height + j;
-	int n = j*grid->info.width + i;
-	std::cout<<"Checking collision at "<<i<<" "<<j<<" "<<grid->info.width<<" "<<grid->info.height<<" "<<n<<" "<<grid->data[n]<<std::endl;
-	
+	int n = i*grid->info.width + j;
+
 	if (i>=grid->info.width || i<0 || j>=grid->info.height || j<0){
 		// off the map, register as collision
 		return true;
@@ -70,6 +69,14 @@ int main(int argc, char **argv){
 	if (ros::param::has("~lower_y_limit")){
 		ros::param::get("~lower_y_limit", lower_y_limit);
 	}
+	float min_obs_height = 0.5f;
+	if (ros::param::has("~min_obs_height")){
+		ros::param::get("~min_obs_height", min_obs_height);
+	}
+	float truth_map_res = 0.25f;
+	if (ros::param::has("~truth_map_res")){
+		ros::param::get("~truth_map_res", truth_map_res);
+	}
 
 	mavs::environment::Environment env;
 	mavs::raytracer::embree::EmbreeTracer scene;
@@ -79,8 +86,10 @@ int main(int argc, char **argv){
 	mavs::sensor::ogd::OccupancyGridDetector detector;
 	float px = 0.5f*(upper_x_limit + lower_x_limit);
 	float py = 0.5f*(upper_y_limit + lower_y_limit);
-	detector.Initialize(upper_x_limit-lower_x_limit, upper_y_limit-lower_y_limit, 0.1f);
+	detector.Initialize(upper_x_limit-lower_x_limit, upper_y_limit-lower_y_limit, truth_map_res);
 	detector.SetPose(glm::vec3(px,py,0.0f),glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
+	detector.SetMaxHeight(min_obs_height);
+	detector.SetNumIgnore(0);
 	detector.Update(&env, 0.1);
 	mavs::OccupancyGrid occ_grid = detector.GetGrid();
 
@@ -91,9 +100,11 @@ int main(int argc, char **argv){
 	bool failed = false;
 	std::ofstream sout("sim_log_result.txt");
 	std::ofstream fout("trajectory.txt");
+	fout <<"Elapsed_Time Pos_x Pos_y Speed"<<std::endl;
 	while (ros::ok()){
 
 		elapsed_time = ros::Time::now().toSec() - start_time;
+
 		if (elapsed_time>timeout){
 			sout<<"TIMEOUT"<<std::endl;
 			failed = true;
