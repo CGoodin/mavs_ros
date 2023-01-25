@@ -3,35 +3,60 @@
 //ros includes
 #include "ros/ros.h"
 #include "nav_msgs/Odometry.h"
+// package includes
+#include "mavs_ros_utils.h"
 // mavs includes
 #include "raytracers/embree_tracer/embree_tracer.h"
 #include "sensors/occupancy_grid_detector/occupancy_grid_detector.h"
 
 nav_msgs::Odometry odom;
 bool rcvd_odom = false;
+
 void OdomCallback(const nav_msgs::Odometry::ConstPtr& rcv_odom){
 	odom = *rcv_odom;
 	rcvd_odom = true;
 }
 
+bool Collision(mavs::OccupancyGrid *grid, float px_c, float py_c, float vl, float vw, int thresh){
 
-bool Collision(mavs::OccupancyGrid *grid, float px, float py){
-	int i = (int)floor((px - grid->info.origin.position.x)/grid->info.resolution);
-	int j = (int)floor((py - grid->info.origin.position.y)/grid->info.resolution);
 	
-	int n = i*grid->info.width + j;
+	
+	float heading = mavs_ros_utils::GetHeadingFromOrientation(odom.pose.pose.orientation);
+	float ltx = cosf(heading);
+	float lty = sinf(heading);
+	float lsx = -sinf(heading);
+	float lsy = cosf(heading);
+	float len = 0.5f*vl;
+	float wid = 0.5f*vw;
+	float px = px_c - ltx*len - lsx*wid;
+	float py = py_c - lty*len - lsy*wid;
 
-	if (i>=grid->info.width || i<0 || j>=grid->info.height || j<0){
-		// off the map, register as collision
-		return true;
+	float dx = 0.0f;
+	float step = grid->info.resolution;
+	bool collis = false;
+
+	while (dx<=vl){
+		float dy = 0.0f;
+		while (dy<=vw){
+			float pxx = px + dx*ltx + dy*lsx;
+			float pyy = py + dx*lty + dy*lsy;
+			
+			int i = (int)floor((pxx - grid->info.origin.position.x)/grid->info.resolution);
+			int j = (int)floor((pyy - grid->info.origin.position.y)/grid->info.resolution);
+
+			if (i<grid->info.width && i>=0 && j<grid->info.height && j>=0){
+				int n = i*grid->info.width + j;
+				
+				if (grid->data[n]>thresh){
+					collis = true;
+					break;
+				}
+			}
+			dy += step;
+		}
+		dx += step;
 	}
-	
-	if (grid->data[n]>0){
-		return true;
-	}
-	else{
-		return false;
-	}
+	return collis;
 }
 
 int main(int argc, char **argv){
@@ -77,6 +102,26 @@ int main(int argc, char **argv){
 	if (ros::param::has("~truth_map_res")){
 		ros::param::get("~truth_map_res", truth_map_res);
 	}
+	float vehicle_length = 3.55f;
+	if (ros::param::has("~vehicle_length")){
+		ros::param::get("~vehicle_length", vehicle_length);
+	}
+	float vehicle_width = 1.55f;
+	if (ros::param::has("~vehicle_width")){
+		ros::param::get("~vehicle_width", vehicle_width);
+	}
+	bool display_map = false;
+	if (ros::param::has("~display_map")){
+		ros::param::get("~display_map", display_map);
+	}
+	bool save_trajectory = false;
+	if (ros::param::has("~save_trajectory")){
+		ros::param::get("~save_trajectory", save_trajectory);
+	}
+	int obstacle_slope_thresh = 35;
+	if (ros::param::has("~obstacle_slope_thresh")){
+		ros::param::get("~obstacle_slope_thresh", obstacle_slope_thresh);
+	}
 
 	mavs::environment::Environment env;
 	mavs::raytracer::embree::EmbreeTracer scene;
@@ -92,15 +137,19 @@ int main(int argc, char **argv){
 	detector.SetNumIgnore(0);
 	detector.Update(&env, 0.1);
 	mavs::OccupancyGrid occ_grid = detector.GetGrid();
+	if (display_map)detector.Display();
 
-	double dt = 0.1;
+	double dt = 1.0/50.0;
 	ros::Rate rate(1.0 / dt);
 	double elapsed_time = 0.0;
 	double start_time = ros::Time::now().toSec();
 	bool failed = false;
 	std::ofstream sout("sim_log_result.txt");
-	std::ofstream fout("trajectory.txt");
-	fout <<"Elapsed_Time Pos_x Pos_y Speed"<<std::endl;
+	std::ofstream fout;
+	if (save_trajectory){
+		fout.open("trajectory.txt");
+		fout <<"Elapsed_Time Pos_x Pos_y Speed"<<std::endl;
+	}
 	while (ros::ok()){
 
 		elapsed_time = ros::Time::now().toSec() - start_time;
@@ -117,14 +166,14 @@ int main(int argc, char **argv){
 			float vx = odom.twist.twist.linear.x;
 			float vy = odom.twist.twist.linear.y;
 			float speed = sqrtf(vx*vx + vy*vy);
-			fout<<elapsed_time<<" "<<px<<" "<<py<<" "<<speed<<std::endl;
+			if (save_trajectory) fout<<elapsed_time<<" "<<px<<" "<<py<<" "<<speed<<std::endl;
 			
 			if (px<lower_x_limit || px>upper_x_limit || py<lower_y_limit || py>upper_y_limit){
 				sout<<"OUT OF BOUNDS"<<std::endl;
 				failed = true;
 				break;
 			}	
-			if (Collision(&occ_grid, px, py)){
+			if (Collision(&occ_grid, px, py, vehicle_length, vehicle_width, obstacle_slope_thresh)){
 				sout<<"COLLISION"<<std::endl;
 				failed = true;
 				break;
@@ -137,6 +186,6 @@ int main(int argc, char **argv){
 
 	if (!failed)sout<<"SUCCESS"<<std::endl;
 	sout.close();
-	fout.close();
+	if (save_trajectory) fout.close();
 	return 0;
 }

@@ -67,7 +67,7 @@ target_link_libraries(mavs_sensors_node
   ${EMBREE_LIBRARY}
 )
 
-add_executable(sim_manager_node src/sim_manager_node.cpp)
+add_executable(sim_manager_node src/sim_manager_node.cpp src/mavs_ros_utils.cpp)
 target_link_libraries(sim_manager_node
   ${catkin_LIBRARIES}
   X11

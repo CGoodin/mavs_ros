@@ -1,5 +1,5 @@
 <launch>
- <arg name="scene_file_arg" default="/home/cgoodin/mavs/data/scenes/forester_scene_less_trees_simple.json" /> 
+ <arg name="scene_file_arg" default="/home/cgoodin/mavs/data/scenes/cube_scene.json" /> 
   <arg name="vehicle_file_arg" default="/home/cgoodin/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
 
 
@@ -20,13 +20,18 @@
 
   <node name="sim_manager_node" pkg="mavs_ros" type="sim_manager_node" output="screen" required="true" >
     <param name="scene_file" value="$(arg scene_file_arg)"/>
-    <param name = "timeout" value = "500.0"/> 
-    <param name = "upper_x_limit" value = "50.0"/> 
-    <param name = "upper_y_limit" value = "50.0"/> 
-    <param name = "lower_x_limit" value = "-50.0"/> 
-    <param name = "lower_y_limit" value = "-50.0"/> 
+    <param name = "timeout" value = "600.0"/> 
+    <param name = "upper_x_limit" value = "100.0"/> 
+    <param name = "upper_y_limit" value = "100.0"/> 
+    <param name = "lower_x_limit" value = "-100.0"/> 
+    <param name = "lower_y_limit" value = "-100.0"/> 
     <param name = "min_obs_height" value = "0.65"/> 
     <param name = "truth_map_res" value = "0.2"/> 
+    <param name = "vehicle_length" value = "3.55"/>
+    <param name = "vehicle_width" value = "1.55"/> 
+    <param name = "display_map" value = "false"/> 
+    <param name = "save_trajectory" value = "true"/> 
+    <param name = "obstacle_slope_thresh" value = "35"/> 
   </node>
 
 </launch>
