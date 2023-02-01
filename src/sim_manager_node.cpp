@@ -19,8 +19,6 @@ void OdomCallback(const nav_msgs::Odometry::ConstPtr& rcv_odom){
 
 bool Collision(mavs::OccupancyGrid *grid, float px_c, float py_c, float vl, float vw, int thresh){
 
-	
-	
 	float heading = mavs_ros_utils::GetHeadingFromOrientation(odom.pose.pose.orientation);
 	float ltx = cosf(heading);
 	float lty = sinf(heading);
@@ -45,7 +43,8 @@ bool Collision(mavs::OccupancyGrid *grid, float px_c, float py_c, float vl, floa
 			int j = (int)floor((pyy - grid->info.origin.position.y)/grid->info.resolution);
 
 			if (i<grid->info.width && i>=0 && j<grid->info.height && j>=0){
-				int n = i*grid->info.width + j;
+				//int n = i*grid->info.width + j;
+				int n = i*grid->info.height + j;
 				
 				if (grid->data[n]>thresh){
 					collis = true;
