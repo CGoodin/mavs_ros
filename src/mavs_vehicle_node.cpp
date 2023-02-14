@@ -17,13 +17,16 @@
 #include "raytracers/embree_tracer/embree_tracer.h"
 #include "sensors/mavs_sensors.h"
 
-float throttle = 0.0f;
-float steering = 0.0f;
-float braking = 0.0f;
+float auto_throttle = 0.0f;
+float auto_steering = 0.0f;
+float auto_braking = 0.0f;
+float human_throttle = 0.0;
+float human_steering = 0.0;
+float human_braking = 0.0;
 void TwistCallback(const geometry_msgs::Twist::ConstPtr &rcv_msg){
-	throttle = rcv_msg->linear.x;
-	braking = rcv_msg->linear.y;
-	steering = rcv_msg->angular.z;
+	auto_throttle = rcv_msg->linear.x;
+	auto_braking = rcv_msg->linear.y;
+	auto_steering = rcv_msg->angular.z;
 }
 
 int main(int argc, char **argv){
@@ -92,6 +95,19 @@ int main(int argc, char **argv){
 		ros::param::get("~use_human_driver", use_human_driver);
 	}
 
+	bool shared_control = false;
+	if (ros::param::has("~shared_control")){
+		ros::param::get("~shared_control", shared_control);
+	}
+
+	float auto_frac = 0.0f;
+	float human_frac = 1.0f;
+	if (ros::param::has("~auto_frac")){
+		ros::param::get("~auto_frac", auto_frac);
+		auto_frac = std::min(1.0f,std::max(0.0f, auto_frac));
+		human_frac = 1.0f-auto_frac;
+	}
+
 	mavs::sensor::imu::ImuSimple imu;
 	if (ros::param::has("~imu_input_file")){
 		std::string imu_input_file;
@@ -134,7 +150,7 @@ int main(int argc, char **argv){
 	mavs_veh.Load(rp3d_vehicle_file);
 	mavs_veh.SetPosition(initial_position.x, initial_position.y, initial_position.z);
 	mavs_veh.SetOrientation(initial_orientation.w, initial_orientation.x, initial_orientation.y, initial_orientation.z);
-	mavs_veh.Update(&env, throttle, steering, braking, 0.00001);
+	mavs_veh.Update(&env, 0.0f, 0.0f, 0.0f, 0.00001);
 
 	mavs::sensor::camera::RgbCamera camera;
 	camera.Initialize(384, 384, 0.0035, 0.0035, 0.0035);
@@ -150,24 +166,60 @@ int main(int argc, char **argv){
 	double start_time = ros::Time::now().toSec();
 	while (ros::ok()){
 		//vehicle state update
-		if (use_human_driver){
-			throttle = 0.0;
-			steering = 0.0;
-			braking = 0.0;
+		
+		if (use_human_driver || shared_control){	
 			std::vector<bool> driving_commands = camera.GetKeyCommands();
 			if (driving_commands[0]) {
-				throttle = 1.0;
+				//human_throttle = 1.0f; 
+				human_throttle += dt/2.0f;
+				human_throttle = std::min(1.0f, human_throttle);
+				human_braking = 0.0f;
 			}
-			else if (driving_commands[1]) {
-				braking = -1.0;
+			else if (driving_commands[1]) { 
+				human_braking -= dt;
+				human_braking = std::max(-1.0f, human_braking);
+				human_throttle = 0.0f;
+			}
+			else{ 
+				human_throttle *= 0.5f;
+				human_braking = 0.0f;
 			}
 			if (driving_commands[2]) {
-				steering = 1.0;
+				human_steering += dt;
+				human_steering = std::min(1.0f, human_steering);
 			}
-			else if (driving_commands[3]) {
-				steering = -1.0;
+			else if (driving_commands[3]) { 
+				human_steering -= dt;
+				human_steering = std::max(-1.0f, human_steering);
+			}
+			else{
+				human_steering = 0.0f; 
 			}
 		}
+
+		float throttle, steering, braking;
+		if (shared_control){
+			if (human_braking!=0.0f || auto_braking!=0.0f){
+				throttle = 0.0f;
+				braking = auto_frac*auto_braking + human_frac*human_braking;
+			}
+			else{
+				throttle = auto_frac*auto_throttle + human_frac*human_throttle;
+				braking = 0.0f;
+			}
+			steering = auto_frac*auto_steering + human_frac*human_steering;
+		}
+		else if (use_human_driver){
+			throttle = human_throttle;
+			steering = human_steering;
+			braking = human_braking;
+		}
+		else{
+			throttle = auto_throttle;
+			steering = auto_steering;
+			braking = auto_braking;
+		}
+
 		mavs_veh.Update(&env, throttle, steering, -braking, dt);
 		mavs::VehicleState veh_state = mavs_veh.GetState();
 
