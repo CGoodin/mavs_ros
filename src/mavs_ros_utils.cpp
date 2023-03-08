@@ -114,6 +114,7 @@ void CopyFromMavsOdometry(nav_msgs::Odometry &odom, mavs::Odometry &mavs_odom){
 }
 
 void CopyFromMavsGrid(nav_msgs::OccupancyGrid &grid, mavs::OccupancyGrid &mavs_grid){
+
     grid.info.width = mavs_grid.info.width;
     grid.info.height = mavs_grid.info.height;
     grid.info.resolution = mavs_grid.info.resolution;
@@ -124,10 +125,20 @@ void CopyFromMavsGrid(nav_msgs::OccupancyGrid &grid, mavs::OccupancyGrid &mavs_g
     grid.info.origin.orientation.x = mavs_grid.info.origin.quaternion.x;
     grid.info.origin.orientation.y = mavs_grid.info.origin.quaternion.y;
     grid.info.origin.orientation.z = mavs_grid.info.origin.quaternion.z;
-    grid.data.resize(mavs_grid.data.size());
-    for (int i=0;i<mavs_grid.data.size();i++){
-        grid.data[i] = (uint8_t)mavs_grid.data[i];
-    }
+
+	grid.data.resize(mavs_grid.data.size());
+	for (int i=0;i<grid.info.width;i++){
+		for (int j=0;j<grid.info.height;j++){
+			int n0 = grid.info.width*j + i;
+			int n1 = grid.info.height*i + j;
+			grid.data[n0] = mavs_grid.data[n1];
+		}
+	}
+
+    //grid.data.resize(mavs_grid.data.size());
+    //for (int i=0;i<mavs_grid.data.size();i++){
+    //    grid.data[i] = (uint8_t)mavs_grid.data[i];
+    //}
     grid.header.frame_id = "map";
 }
 
