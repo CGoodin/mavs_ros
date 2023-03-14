@@ -4,6 +4,7 @@
 //ros includes
 #include "ros/ros.h"
 #include "nav_msgs/Odometry.h"
+#include "geometry_msgs/PoseArray.h"
 #include "geometry_msgs/Twist.h"
 #include "rosgraph_msgs/Clock.h"
 #include "sensor_msgs/Imu.h"
@@ -38,6 +39,7 @@ int main(int argc, char **argv){
 	ros::Subscriber twist_sub = n.subscribe("mavs_ros/cmd_vel", 1, TwistCallback);
 
 	ros::Publisher odom_true = n.advertise<nav_msgs::Odometry>("mavs_ros/odometry_true", 10);
+	ros::Publisher anim_poses_pub = n.advertise<geometry_msgs::PoseArray>("mavs_ros/anim_poses", 10);
 	ros::Publisher rtk_pub = n.advertise<nav_msgs::Odometry>("mavs_ros/odometry", 10);
 	ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("mavs_ros/imu", 10);
 
@@ -98,6 +100,11 @@ int main(int argc, char **argv){
 	bool shared_control = false;
 	if (ros::param::has("~shared_control")){
 		ros::param::get("~shared_control", shared_control);
+	}
+
+	std::string vehicle_id = "mavs_vehicle";
+	if (ros::param::has("~vehicle_id")){
+		ros::param::get("~vehicle_id", vehicle_id);
 	}
 
 	float auto_frac = 0.0f;
@@ -266,6 +273,29 @@ int main(int argc, char **argv){
 		true_odom.header.stamp = ros::Time::now();
 
 		odom_true.publish(true_odom);
+
+		// publish the pose of all the animated objects associated with the vehicle
+		geometry_msgs::PoseArray anim_poses;
+		geometry_msgs::Pose vpose;
+		vpose.position = true_odom.pose.pose.position;
+		vpose.orientation = true_odom.pose.pose.orientation;
+		anim_poses.poses.push_back(vpose);
+		for (int i = 0; i < mavs_veh.GetNumTires(); i++){
+			glm::vec3 tpos = mavs_veh.GetTirePosition(i);
+			glm::quat tori = mavs_veh.GetTireOrientation(i);
+			geometry_msgs::Pose tpose;
+			tpose.position.x = tpos.x;
+			tpose.position.y = tpos.y;
+			tpose.position.z = tpos.z;
+			tpose.orientation.w = tori.w;
+			tpose.orientation.x = tori.x;
+			tpose.orientation.y = tori.y;
+			tpose.orientation.z = tori.z;
+			anim_poses.poses.push_back(tpose);
+		}
+		anim_poses.header.frame_id = vehicle_id;
+		anim_poses.header.stamp = ros::Time::now();
+		anim_poses_pub.publish(anim_poses);
 
 		//clock update
 		if (use_sim_time){

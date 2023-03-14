@@ -3,6 +3,7 @@
 #include <unistd.h>
 //ros includes
 #include "ros/ros.h"
+#include "geometry_msgs/PoseArray.h"
 #include "nav_msgs/Odometry.h"
 #include "nav_msgs/OccupancyGrid.h"
 #include "sensor_msgs/PointCloud2.h"
@@ -23,6 +24,7 @@
 #include "mavs_core/math/utils.h"
 #include "sensors/lidar/lidar_tools.h"
 #include "vehicles/rp3d_veh/mavs_rp3d_veh.h"
+#include "mavs_core/data_path.h"
 
 mavs::VehicleState veh_state; 
 void OdomCallback(const nav_msgs::Odometry::ConstPtr& rcv_odom){
@@ -36,6 +38,18 @@ void OdomCallback(const nav_msgs::Odometry::ConstPtr& rcv_odom){
 	veh_state.pose.quaternion.z = rcv_odom->pose.pose.orientation.z;
 }
 
+std::map<std::string, geometry_msgs::PoseArray > poses_map;
+void AnimPosesCallback(const geometry_msgs::PoseArray::ConstPtr& rcv_msg){
+	geometry_msgs::PoseArray anim_poses = *rcv_msg;
+	std::string key = anim_poses.header.frame_id;
+	if (poses_map.count(key)>0 ){
+		poses_map[key] = anim_poses;
+	}
+	else{
+		poses_map.insert({key,anim_poses});	
+	}
+}
+
 int main(int argc, char **argv){
 	//- Create the node and subscribers ---//
 	ros::init(argc, argv, "mavs_sensors_node");
@@ -45,6 +59,19 @@ int main(int argc, char **argv){
 
 	ros::Subscriber odom_sub = n.subscribe("mavs_ros/odometry_true", 1, OdomCallback);
 	ros::Publisher lidar_pub = n.advertise<sensor_msgs::PointCloud2>("mavs_ros/point_cloud2", 1);
+
+
+	int num_veh = 1;
+	if (ros::param::has("~num_vehicles")){
+		ros::param::get("~num_vehicles",num_veh);
+	}
+
+	std::vector<ros::Subscriber> anim_subs;
+	for (int nv = 0; nv<num_veh;nv++){
+		std::string topic_name = "/mavs_ros/anim_poses"+mavs::utils::ToString(nv+1,3);
+		auto anim_sub = n.subscribe(topic_name, num_veh+25, AnimPosesCallback);
+		anim_subs.push_back(anim_sub);
+	}
 
 	std::string scene_file;
 	if (ros::param::has("~scene_file")){
@@ -97,7 +124,7 @@ int main(int argc, char **argv){
 		std::cerr << "ERROR: MUST PROVIDE PARAMETER rp3d_vehicle_file to use mavs node" << std::endl;
 		exit(1);
 	}
-
+	
 
 	mavs::environment::Environment env;
 	if (rain_rate > 0.0){
@@ -118,6 +145,17 @@ int main(int argc, char **argv){
 	scene.Load(scene_file); 
 	scene.TurnOffLabeling();
 	env.SetRaytracer(&scene);
+
+
+	//mavs::MavsDataPath mdp;
+	//std::string mavs_data_path = mdp.GetPath();
+	for (int nv =0; nv<(int)num_veh;nv++){
+		mavs::vehicle::Rp3dVehicle mavs_veh;
+		mavs_veh.Load(rp3d_vehicle_file);
+		mavs_veh.SetPosition(-10000.0f, -10000.0f, -10000.0f);
+		mavs_veh.SetOrientation(1.0f, 0.0f, 0.0f, 0.0f);
+		mavs_veh.Update(&env, 0.0, 0.0, 0.0, 0.00001);
+	}
 
 	glm::vec3 offset(0.0f, 0.0f, 1.35f);
 	glm::vec3 origin(0.0f, 0.0f, 0.f);
@@ -163,34 +201,53 @@ int main(int argc, char **argv){
 	double start_time = ros::Time::now().toSec();
 	while (ros::ok()){
 
-		env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
+		//env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
 
-		double t0 = omp_get_wtime();
-		env.AdvanceParticleSystems(0.1);
+		if ((int)poses_map.size()==num_veh){
+			// consolidate all the animation poses
+			geometry_msgs::PoseArray anim_poses;
+			//anim_poses.header.stamp = n->now();
+			anim_poses.header.frame_id = "world";
+			for (auto const& x : poses_map){
+				for (int i=0;i<(int)x.second.poses.size();i++){
+					anim_poses.poses.push_back(x.second.poses[i]);
+				}
+			}
+			// move all the actors
+			if (env.GetNumberOfActors()>=(int)(anim_poses.poses.size())){
+				for (int i=0;i<(int)anim_poses.poses.size();i++){
+					glm::vec3 tpos(anim_poses.poses[i].position.x, anim_poses.poses[i].position.y, anim_poses.poses[i].position.z);
+					glm::quat tori(anim_poses.poses[i].orientation.w, anim_poses.poses[i].orientation.x, anim_poses.poses[i].orientation.y, anim_poses.poses[i].orientation.z);
+					env.SetActorPosition(i, tpos, tori, dt, true);
+				}
+			}
 
-		lidar->SetPose(veh_state);
+			double t0 = omp_get_wtime();
+			env.AdvanceParticleSystems(0.1);
+
+			lidar->SetPose(veh_state);
+			
+			lidar->Update(&env, 0.1);
 		
-		lidar->Update(&env, 0.1);
-	
-		mavs::PointCloud2 mavs_pc;
-		if (register_lidar){
-			mavs_pc = lidar->GetPointCloud2Registered(); 
+			mavs::PointCloud2 mavs_pc;
+			if (register_lidar){
+				mavs_pc = lidar->GetPointCloud2Registered(); 
+			}
+			else{
+				mavs_pc = lidar->GetPointCloud2();
+			}
+			sensor_msgs::PointCloud2 pc = mavs_ros_utils::CopyFromMavsPc2(mavs_pc);
+
+			nscans++;
+
+			pc.header.stamp = ros::Time::now();
+			pc.header.frame_id = "odom";
+			lidar_pub.publish(pc);
+
+			if (display_lidar){
+				lidar->Display();
+			}
 		}
-		else{
-			mavs_pc = lidar->GetPointCloud2();
-		}
-		sensor_msgs::PointCloud2 pc = mavs_ros_utils::CopyFromMavsPc2(mavs_pc);
-
-		nscans++;
-
-		pc.header.stamp = ros::Time::now();
-		pc.header.frame_id = "odom";
-		lidar_pub.publish(pc);
-
-		if (display_lidar){
-			lidar->Display();
-		}
-
 		rate.sleep();
 		ros::spinOnce();
 	} //while ros OK
