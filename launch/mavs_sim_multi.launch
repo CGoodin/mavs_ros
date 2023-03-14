@@ -2,16 +2,16 @@
  <arg name="scene_file_arg" default="/home/cgoodin/mavs/data/scenes/forester_scene_less_trees_simple.json" /> 
   <arg name="vehicle_file_arg" default="/home/cgoodin/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
 
-  <arg name="cmd_vel_topic_arg" default="nature/cmd_vel" />
+  <!--<arg name="cmd_vel_topic_arg" default="nature/cmd_vel" />
   <arg name="point_cloud_topic_arg" default="nature/points" />
-  <arg name="odometry_topic_arg" default="nature/odometry" />
+  <arg name="odometry_topic_arg" default="nature/odometry" /> -->
 
   <node name="mavs_vehcicle_node1" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
-    <remap from="mavs_ros/cmd_vel" to="$(arg cmd_vel_topic_arg)"/> 
+    <remap from="mavs_ros/cmd_vel" to="mavs_ros/cmd_vel001"/> 
     <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true001"/> 
     <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
     <remap from="mavs_ros/anim_poses" to="mavs_ros/anim_poses001"/> 
-    <param name= "debug_camera" value="true" />
+    <param name= "debug_camera" value="false" />
     <param name = "Initial_X_Position" value = "-50.0"/>
     <param name = "Initial_Y_Position" value = "0.0"/>
     <param name = "Initial_Heading" value = "0.0"/>
@@ -25,12 +25,12 @@
   </node>
 
     <node name="mavs_vehcicle_node2" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
-    <remap from="mavs_ros/cmd_vel" to="$(arg cmd_vel_topic_arg)"/> 
+    <remap from="mavs_ros/cmd_vel" to="mavs_ros/cmd_vel002"/> 
     <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true002"/> 
     <remap from="mavs_ros/anim_poses" to="mavs_ros/anim_poses002"/> 
     <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
-    <param name= "debug_camera" value="true" />
-    <param name = "Initial_X_Position" value = "-50.0"/>
+    <param name= "debug_camera" value="false" />
+    <param name = "Initial_X_Position" value = "-40.0"/>
     <param name = "Initial_Y_Position" value = "0.0"/>
     <param name = "Initial_Heading" value = "0.0"/>
     <param name="scene_file" value="$(arg scene_file_arg)"/>
@@ -38,12 +38,12 @@
     <param name = "surface_type" value = "dry"/>  
     <param name= "publish_imu" value="true" />
     <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
-    <param name= "use_human_driver" value="true" />
+    <param name= "use_human_driver" value="false" />
     <param name="vehicle_id" value="vehicle2" />
   </node>
 
   <node name="mavs_sensors_node" pkg="mavs_ros" type="mavs_sensors_node" output="screen" required="true" >
-    <remap from="mavs_ros/point_cloud2" to="$(arg point_cloud_topic_arg)"/>
+    <!--<remap from="mavs_ros/point_cloud2" to="$(arg point_cloud_topic_arg)"/>-->
     <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true001"/>  
     <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
     <param name="scene_file" value="$(arg scene_file_arg)"/>
@@ -53,6 +53,27 @@
     <param name = "lidar_type" value = "OS1"/>
     <param name="blanking_dist" value="5.0" />
     <param name="num_vehicles" value="2" />
+    <param name="off_x" value="1.0" />
+    <param name="off_y" value="0.0" />
+    <param name="off_z" value="1.5" />
+  </node>
+
+    <node name="mavs_camera_node" pkg="mavs_ros" type="mavs_camera_node" output="screen" required="true" >
+    <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true001"/>  
+    <remap from="mavs_ros/cmd_vel" to="mavs_ros/cmd_vel001"/>  
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name= "display_image" value="true" />
+    <param name="num_vehicles" value="2" />
+    <param name="off_x" value="-10.0" />
+    <param name="off_y" value="0.0" />
+    <param name="off_z" value="2.5" />
+    <param name="num_horizontal_pix" value="384" />
+    <param name="num_vertical_pix" value="256" />
+    <param name="horizontal_pixdim" value="0.00525" />
+    <param name="vertical_pixdim" value="0.0035" />
+    <param name="focal_length" value="0.0035" />
+    <param name="publish_driving_commands" value="true" />
   </node>
 
 

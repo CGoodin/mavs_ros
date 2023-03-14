@@ -26,6 +26,10 @@
 #include "vehicles/rp3d_veh/mavs_rp3d_veh.h"
 #include "mavs_core/data_path.h"
 
+float human_throttle = 0.0;
+float human_steering = 0.0;
+float human_braking = 0.0;
+
 mavs::VehicleState veh_state; 
 void OdomCallback(const nav_msgs::Odometry::ConstPtr& rcv_odom){
 	nav_msgs::Odometry odom = *rcv_odom;
@@ -52,13 +56,14 @@ void AnimPosesCallback(const geometry_msgs::PoseArray::ConstPtr& rcv_msg){
 
 int main(int argc, char **argv){
 	//- Create the node and subscribers ---//
-	ros::init(argc, argv, "mavs_sensors_node");
+	ros::init(argc, argv, "mavs_camera_node");
 	ros::NodeHandle n;
 
 	ros::Publisher clock_pub;
 
 	ros::Subscriber odom_sub = n.subscribe("mavs_ros/odometry_true", 1, OdomCallback);
-	ros::Publisher lidar_pub = n.advertise<sensor_msgs::PointCloud2>("mavs_ros/point_cloud2", 1);
+	ros::Publisher camera_pub = n.advertise<sensor_msgs::Image>("mavs_ros/image", 1);
+	ros::Publisher dc_pub = n.advertise<geometry_msgs::Twist>("mavs_ros/cmd_vel", 1);
 
 
 	int num_veh = 1;
@@ -88,26 +93,17 @@ int main(int argc, char **argv){
 	if (ros::param::has("~dust_rate")){
 		ros::param::get("~dust_rate", dust_rate);
 	}
-	bool use_lidar = true;
-	if (ros::param::has("~use_lidar")){
-		ros::param::get("~use_lidar", use_lidar);
+
+	bool display_image = false;
+	if (ros::param::has("~display_image")){
+		ros::param::get("~display_image", display_image);
 	}
-	bool display_lidar = false;
-	if (ros::param::has("~display_lidar")){
-		ros::param::get("~display_lidar", display_lidar);
+
+	bool publish_driving_commands = false;
+	if (ros::param::has("~publish_driving_commands")){
+		ros::param::get("~publish_driving_commands", publish_driving_commands);
 	}
-	bool register_lidar = true;
-	if (ros::param::has("~register_lidar")){
-		ros::param::get("~register_lidar", register_lidar);
-	}
-	std::string lidar_type = "OS1";
-	if (ros::param::has("~lidar_type")){
-		ros::param::get("~lidar_type", lidar_type);
-	}
-	float blanking_dist = 1.0f;
-	if (ros::param::has("~blanking_dist")){
-		ros::param::get("~blanking_dist",blanking_dist);
-	}
+
 	float off_x = 1.0f;
 	if (ros::param::has("~off_x")){
 		ros::param::get("~off_x",off_x);
@@ -121,14 +117,28 @@ int main(int argc, char **argv){
 		ros::param::get("~off_z",off_z);
 	}
 
-	float grid_size = 500.0f;
-	if (ros::param::has("~grid_size")){
-		ros::param::get("~grid_size", grid_size);
+	int num_horizontal_pix = 256;
+	if (ros::param::has("~num_horizontal_pix")){
+		ros::param::get("~num_horizontal_pix",num_horizontal_pix);
 	}
-	float grid_res = 1.0f;
-	if (ros::param::has("~grid_res")){
-		ros::param::get("~grid_res", grid_res);
+	int num_vertical_pix = 256;
+	if (ros::param::has("~num_vertical_pix")){
+		ros::param::get("~num_vertical_pix",num_vertical_pix);
 	}
+	float horizontal_pixdim = 0.0035f;
+	if (ros::param::has("~horizontal_pixdim")){
+		ros::param::get("~horizontal_pixdim",horizontal_pixdim);
+	}
+	float vertical_pixdim = 0.0035f;
+	if (ros::param::has("~vertical_pixdim")){
+		ros::param::get("~vertical_pixdim",vertical_pixdim);
+	}
+	float focal_length = 0.0035f;
+	if (ros::param::has("~focal_length")){
+		ros::param::get("~focal_length",focal_length);
+	}
+
+	
 	std::string rp3d_vehicle_file;
 	if (ros::param::has("~rp3d_vehicle_file")){
 		ros::param::get("~rp3d_vehicle_file", rp3d_vehicle_file);
@@ -159,9 +169,6 @@ int main(int argc, char **argv){
 	scene.TurnOffLabeling();
 	env.SetRaytracer(&scene);
 
-
-	//mavs::MavsDataPath mdp;
-	//std::string mavs_data_path = mdp.GetPath();
 	for (int nv =0; nv<(int)num_veh;nv++){
 		mavs::vehicle::Rp3dVehicle mavs_veh;
 		mavs_veh.Load(rp3d_vehicle_file);
@@ -173,47 +180,16 @@ int main(int argc, char **argv){
 	glm::vec3 offset(off_x, off_y, off_z);
 	glm::quat relor(1.0f, 0.0f, 0.0f, 0.0f);
 
-	mavs::sensor::lidar::Lidar *lidar;
+	mavs::sensor::camera::RgbCamera camera;
+	camera.Initialize(num_horizontal_pix,num_vertical_pix, horizontal_pixdim, vertical_pixdim, focal_length);
+	camera.SetRelativePose(offset, relor);
 
-	if (lidar_type == "OS1"){
-		lidar = new mavs::sensor::lidar::OusterOS1;
-		lidar->SetName("OS1");
-	}
-	if (lidar_type == "OS2"){
-		lidar = new mavs::sensor::lidar::OusterOS2;
-		lidar->SetName("OS2");
-	}
-	if (lidar_type == "HDL32E"){
-		lidar = new mavs::sensor::lidar::Hdl32E;
-		lidar->SetName("HDL32E");
-	}
-	if (lidar_type == "HDL64E"){
-		lidar = new mavs::sensor::lidar::Hdl64E;
-		lidar->SetName("HDL64E");
-	}
-	if (lidar_type == "VLP16"){
-		lidar = new mavs::sensor::lidar::Vlp16;
-		lidar->SetName("VLP16");
-	}
-	if (lidar_type == "M8"){
-		lidar = new mavs::sensor::lidar::MEight;
-		lidar->SetName("M8");
-	}
-	else{
-		lidar = new mavs::sensor::lidar::OusterOS1;
-		lidar->SetName("OS1");
-	}
-
-	lidar->SetRelativePose(offset, relor);
-	lidar->SetBlankingDist(blanking_dist);
 	double dt = 0.1;
 	ros::Rate rate(1.0 / dt);
 	int nscans = 0;
 	double elapsed_time = 0.0;
 	double start_time = ros::Time::now().toSec();
 	while (ros::ok()){
-
-		//env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
 
 		if ((int)poses_map.size()==num_veh || num_veh==1){
 			if (num_veh==1){
@@ -242,27 +218,60 @@ int main(int argc, char **argv){
 			double t0 = omp_get_wtime();
 			env.AdvanceParticleSystems(0.1);
 
-			lidar->SetPose(veh_state);
+			camera.SetPose(veh_state);
 			
-			lidar->Update(&env, 0.1);
+			camera.Update(&env, 0.1);
 		
-			mavs::PointCloud2 mavs_pc;
-			if (register_lidar){
-				mavs_pc = lidar->GetPointCloud2Registered(); 
+			mavs::Image mavs_img;
+			
+			sensor_msgs::Image img;
+			mavs_ros_utils::CopyFromMavsImage(img, mavs_img);
+
+
+
+			if (publish_driving_commands){	
+				std::vector<bool> driving_commands = camera.GetKeyCommands();
+				if (driving_commands[0]) {
+					//human_throttle = 1.0f; 
+					human_throttle += dt/2.0f;
+					human_throttle = std::min(1.0f, human_throttle);
+					human_braking = 0.0f;
+				}
+				else if (driving_commands[1]) { 
+					human_braking -= dt;
+					human_braking = std::max(-1.0f, human_braking);
+					human_throttle = 0.0f;
+				}
+				else{ 
+					human_throttle *= 0.5f;
+					human_braking = 0.0f;
+				}
+				if (driving_commands[2]) {
+					human_steering += dt;
+					human_steering = std::min(1.0f, human_steering);
+				}
+				else if (driving_commands[3]) { 
+					human_steering -= dt;
+					human_steering = std::max(-1.0f, human_steering);
+				}
+				else{
+					human_steering = 0.0f; 
+				}
+				geometry_msgs::Twist dc;
+				dc.linear.x = human_throttle;
+				dc.linear.y = human_braking;
+				dc.angular.z = human_steering;
+				dc_pub.publish(dc);
 			}
-			else{
-				mavs_pc = lidar->GetPointCloud2();
-			}
-			sensor_msgs::PointCloud2 pc = mavs_ros_utils::CopyFromMavsPc2(mavs_pc);
 
 			nscans++;
 
-			pc.header.stamp = ros::Time::now();
-			pc.header.frame_id = "odom";
-			lidar_pub.publish(pc);
+			img.header.stamp = ros::Time::now();
+			img.header.frame_id = "odom";
+			camera_pub.publish(img);
 
-			if (display_lidar){
-				lidar->Display();
+			if (display_image){
+				camera.Display();
 			}
 		}
 		rate.sleep();
@@ -271,9 +280,7 @@ int main(int argc, char **argv){
 
 	double tot_time = ros::Time::now().toSec() - start_time;
 
-	std::cout << "LIDAR rate = " << nscans / tot_time << " scans per second " << nscans << " " << tot_time << std::endl;
-
-	delete lidar;
+	std::cout << "Camera rate = " << nscans / tot_time << " images per second " << nscans << " " << tot_time << std::endl;
 
 	return 0;
 }

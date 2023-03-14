@@ -19,7 +19,7 @@
     <param name = "surface_type" value = "dry"/>  
     <param name= "publish_imu" value="true" />
     <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
-    <param name= "use_human_driver" value="false" />
+    <param name= "use_human_driver" value="true" />
   </node>
 
   <node name="mavs_sensors_node" pkg="mavs_ros" type="mavs_sensors_node" output="screen" required="true" >
