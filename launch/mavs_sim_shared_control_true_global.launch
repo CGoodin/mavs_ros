@@ -1,0 +1,52 @@
+<launch>
+ <arg name="scene_file_arg" default="/home/cgoodin/mavs/data/scenes/forester_scene_less_trees_simple.json" /> 
+  <arg name="vehicle_file_arg" default="/home/cgoodin/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
+
+  <arg name="cmd_vel_topic_arg" default="nature/cmd_vel" />
+  <arg name="point_cloud_topic_arg" default="nature/points" />
+  <arg name="odometry_topic_arg" default="nature/odometry" />
+
+  <node name="mavs_vehcicle_node" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
+    <remap from="mavs_ros/cmd_vel" to="$(arg cmd_vel_topic_arg)"/> 
+    <remap from="mavs_ros/odometry" to="$(arg odometry_topic_arg)"/> 
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name= "debug_camera" value="true" />
+    <param name = "Initial_X_Position" value = "-50.0"/>
+    <param name = "Initial_Y_Position" value = "0.0"/>
+    <param name = "Initial_Heading" value = "0.0"/>
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name = "soil_strength" value = "250"/> 
+    <param name = "surface_type" value = "dry"/>  
+    <param name= "publish_imu" value="true" />
+    <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
+    <param name= "use_human_driver" value="false" />
+    <param name= "shared_control" value="true" />
+    <param name= "auto_frac" value="0.5" />
+  </node>
+
+  <node name="mavs_sensors_node" pkg="mavs_ros" type="mavs_sensors_node" output="screen" required="true" >
+    <remap from="mavs_ros/point_cloud2" to="$(arg point_cloud_topic_arg)"/> 
+    <param name= "use_lidar" value="true" />
+    <param name= "display_lidar" value="true" />
+    <param name= "register_lidar" value="true" />
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name = "lidar_type" value = "OS1"/>
+    <param name="blanking_dist" value="5.0" />
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+  </node>
+
+  <node name="mavs_path_planning_Node" pkg="mavs_ros" type="mavs_path_planning_node" output="screen" required="true" >
+    <remap from="mavs_ros/odometry" to="$(arg odometry_topic_arg)"/> 
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name="upper_x_limit" value="50.0" />
+    <param name="upper_y_limit" value="20.0" />
+    <param name="lower_x_limit" value="-50.0" />
+    <param name="lower_y_limit" value="-20.0" />
+    <param name="min_obs_height" value="0.5" />
+    <param name="truth_map_res" value="0.25" />
+    <param name="goal_x" value="45.0" />
+    <param name="goal_y" value="0.0" />
+  </node>
+
+  <node pkg="tf" name="static_transform_publisher" type="static_transform_publisher" args="0 0 0 0 0 0 1 map odom 10" />
+</launch>

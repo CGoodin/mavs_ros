@@ -85,6 +85,15 @@ target_link_libraries(sim_manager_node
   ${EMBREE_LIBRARY}
 )
 
+add_executable(mavs_path_planning_node src/mavs_path_planning_node.cpp src/astar.cpp src/mavs_ros_utils.cpp)
+target_link_libraries(mavs_path_planning_node
+  ${catkin_LIBRARIES}
+  X11
+  gomp
+  MAVS::mavs 
+  ${EMBREE_LIBRARY}
+)
+
 
 ## Mark executables for installation
 install(TARGETS 
@@ -92,6 +101,7 @@ install(TARGETS
   mavs_sensors_node
   mavs_camera_node
   sim_manager_node
+  mavs_path_planning_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
