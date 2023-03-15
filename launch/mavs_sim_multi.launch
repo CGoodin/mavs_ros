@@ -58,7 +58,7 @@
     <param name="off_z" value="1.5" />
   </node>
 
-    <node name="mavs_camera_node" pkg="mavs_ros" type="mavs_camera_node" output="screen" required="true" >
+  <node name="mavs_camera_node" pkg="mavs_ros" type="mavs_camera_node" output="screen" required="true" >
     <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true001"/>  
     <remap from="mavs_ros/cmd_vel" to="mavs_ros/cmd_vel001"/>  
     <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
@@ -74,6 +74,26 @@
     <param name="vertical_pixdim" value="0.0035" />
     <param name="focal_length" value="0.0035" />
     <param name="publish_driving_commands" value="true" />
+  </node>
+
+    <node name="mavs_static_camera_node" pkg="mavs_ros" type="mavs_static_camera_node" output="screen" required="false" > 
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name="update_rate_hz" value="20.0" />
+    <param name= "display_image" value="true" />
+    <param name="num_vehicles" value="2" />
+    <param name="pos_x" value="-45.0" />
+    <param name="pos_y" value="-20.0" />
+    <param name="pos_z" value="2.5" />
+    <param name="qw" value="0.7071" />
+    <param name="qx" value="0.0" />
+    <param name="qy" value="0.0" />
+    <param name="qz" value="0.7071" />
+    <param name="num_horizontal_pix" value="384" />
+    <param name="num_vertical_pix" value="256" />
+    <param name="horizontal_pixdim" value="0.00525" />
+    <param name="vertical_pixdim" value="0.0035" />
+    <param name="focal_length" value="0.0035" />
   </node>
 
 
