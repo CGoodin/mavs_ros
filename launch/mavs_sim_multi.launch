@@ -24,6 +24,7 @@
     <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
     <param name= "use_human_driver" value="false" />
     <param name="vehicle_id" value="vehicle1" />
+    <param name="sensor_name" value="vehicle_1_camera" />
   </node>
 
   <node name="mavs_vehcicle_node2" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
@@ -42,6 +43,7 @@
     <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
     <param name= "use_human_driver" value="false" />
     <param name="vehicle_id" value="vehicle2" />
+    <param name="sensor_name" value="vehicle_2_camera" />
   </node>
 
   <node name="mavs_vehcicle_node3" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
@@ -60,6 +62,7 @@
     <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
     <param name= "use_human_driver" value="false" />
     <param name="vehicle_id" value="vehicle3" />
+    <param name="sensor_name" value="vehicle_3_camera" />
   </node>
 
   <node name="mavs_sensors_node" pkg="mavs_ros" type="mavs_sensors_node" output="screen" required="true" >
@@ -76,6 +79,7 @@
     <param name="off_x" value="1.0" />
     <param name="off_y" value="0.0" />
     <param name="off_z" value="1.5" />
+    <param name="sensor_name" value="vehicle_1_lidar" />
   </node>
 
   <node name="mavs_camera_node" pkg="mavs_ros" type="mavs_camera_node" output="screen" required="true" >
@@ -94,6 +98,7 @@
     <param name="vertical_pixdim" value="0.0035" />
     <param name="focal_length" value="0.0035" />
     <param name="publish_driving_commands" value="true" />
+    <param name="sensor_name" value="vehicle_1_cam" />
   </node>
 
   <node name="mavs_static_camera_node" pkg="mavs_ros" type="mavs_static_camera_node" output="screen" required="false" > 
@@ -115,6 +120,7 @@
     <param name="vertical_pixdim" value="0.0035" />
     <param name="focal_length" value="0.0035" />
     <param name="keep_vehicles_in_frame" value="true" />
+    <param name="sensor_name" value="static_camera" />
   </node>
 
 

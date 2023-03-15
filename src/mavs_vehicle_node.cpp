@@ -106,6 +106,10 @@ int main(int argc, char **argv){
 	if (ros::param::has("~vehicle_id")){
 		ros::param::get("~vehicle_id", vehicle_id);
 	}
+	std::string sensor_name="vehicle_camera";
+	if (ros::param::has("~sensor_name")){
+		ros::param::get("~sensor_name", sensor_name);
+	}
 
 	float auto_frac = 0.0f;
 	float human_frac = 1.0f;
@@ -161,6 +165,7 @@ int main(int argc, char **argv){
 
 	mavs::sensor::camera::RgbCamera camera;
 	camera.Initialize(384, 384, 0.0035, 0.0035, 0.0035);
+	camera.SetName(sensor_name);
 	camera.SetRenderShadows(false);
 	glm::vec3 cam_offset(-10.0, 0.0, 2.0);
 	camera.SetRelativePose(cam_offset, relor);

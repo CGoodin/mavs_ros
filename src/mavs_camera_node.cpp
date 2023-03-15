@@ -137,8 +137,10 @@ int main(int argc, char **argv){
 	if (ros::param::has("~focal_length")){
 		ros::param::get("~focal_length",focal_length);
 	}
-
-	
+	std::string sensor_name="camera";
+	if (ros::param::has("~sensor_name")){
+		ros::param::get("~sensor_name", sensor_name);
+	}
 	std::string rp3d_vehicle_file;
 	if (ros::param::has("~rp3d_vehicle_file")){
 		ros::param::get("~rp3d_vehicle_file", rp3d_vehicle_file);
@@ -182,6 +184,7 @@ int main(int argc, char **argv){
 
 	mavs::sensor::camera::RgbCamera camera;
 	camera.Initialize(num_horizontal_pix,num_vertical_pix, horizontal_pixdim, vertical_pixdim, focal_length);
+	camera.SetName(sensor_name);
 	camera.SetRelativePose(offset, relor);
 
 	double dt = 0.1;

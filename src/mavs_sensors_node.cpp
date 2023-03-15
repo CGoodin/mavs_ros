@@ -137,7 +137,10 @@ int main(int argc, char **argv){
 		std::cerr << "ERROR: MUST PROVIDE PARAMETER rp3d_vehicle_file to use mavs node" << std::endl;
 		exit(1);
 	}
-	
+	std::string sensor_name="lidar";
+	if (ros::param::has("~sensor_name")){
+		ros::param::get("~sensor_name", sensor_name);
+	}
 
 	mavs::environment::Environment env;
 	if (rain_rate > 0.0){
@@ -177,33 +180,33 @@ int main(int argc, char **argv){
 
 	if (lidar_type == "OS1"){
 		lidar = new mavs::sensor::lidar::OusterOS1;
-		lidar->SetName("OS1");
+		//lidar->SetName("OS1");
 	}
 	if (lidar_type == "OS2"){
 		lidar = new mavs::sensor::lidar::OusterOS2;
-		lidar->SetName("OS2");
+		//lidar->SetName("OS2");
 	}
 	if (lidar_type == "HDL32E"){
 		lidar = new mavs::sensor::lidar::Hdl32E;
-		lidar->SetName("HDL32E");
+		//lidar->SetName("HDL32E");
 	}
 	if (lidar_type == "HDL64E"){
 		lidar = new mavs::sensor::lidar::Hdl64E;
-		lidar->SetName("HDL64E");
+		//lidar->SetName("HDL64E");
 	}
 	if (lidar_type == "VLP16"){
 		lidar = new mavs::sensor::lidar::Vlp16;
-		lidar->SetName("VLP16");
+		//lidar->SetName("VLP16");
 	}
 	if (lidar_type == "M8"){
 		lidar = new mavs::sensor::lidar::MEight;
-		lidar->SetName("M8");
+		//lidar->SetName("M8");
 	}
 	else{
 		lidar = new mavs::sensor::lidar::OusterOS1;
-		lidar->SetName("OS1");
+		//lidar->SetName("OS1");
 	}
-
+	lidar->SetName(sensor_name);
 	lidar->SetRelativePose(offset, relor);
 	lidar->SetBlankingDist(blanking_dist);
 	double dt = 0.1;
