@@ -62,6 +62,12 @@ int main(int argc, char **argv){
 	if (ros::param::has("~display_image")){
 		ros::param::get("~display_image", display_image);
 	}
+
+	bool keep_vehicles_in_frame = false;
+	if (ros::param::has("~keep_vehicles_in_frame")){
+		ros::param::get("~keep_vehicles_in_frame", keep_vehicles_in_frame);
+	}
+
 	float update_rate_hz = 20.0f;
 	if (ros::param::has("~update_rate_hz")){
 		ros::param::get("~update_rate_hz",update_rate_hz);
@@ -118,7 +124,7 @@ int main(int argc, char **argv){
 	if (ros::param::has("~focal_length")){
 		ros::param::get("~focal_length",focal_length);
 	}
-	
+
 	std::string rp3d_vehicle_file;
 	if (ros::param::has("~rp3d_vehicle_file")){
 		ros::param::get("~rp3d_vehicle_file", rp3d_vehicle_file);
@@ -168,16 +174,44 @@ int main(int argc, char **argv){
 			}
 
 			// move all the actors
+			float vmag_long = 0.0f;
+			glm::vec2 vlong(0.0f, 0.0f);
+			glm::vec2 midpoint(0.0f, 0.0f);
 			if (env.GetNumberOfActors()>=(int)(anim_poses.poses.size())){
 				for (int i=0;i<(int)anim_poses.poses.size();i++){
+					if (keep_vehicles_in_frame){
+						for (int j=0;j<(int)anim_poses.poses.size();j++){
+							if (i!=j){
+								glm::vec2 v(anim_poses.poses[i].position.x - anim_poses.poses[j].position.x,
+								anim_poses.poses[i].position.y - anim_poses.poses[j].position.y);
+								float vmag = glm::length(v);
+								if (vmag>vmag_long){
+									vmag_long = vmag;
+									vlong = v;
+									midpoint = 0.5f* glm::vec2(anim_poses.poses[i].position.x + anim_poses.poses[j].position.x,
+									anim_poses.poses[i].position.y + anim_poses.poses[j].position.y);
+								}
+							}
+						}
+					}
 					glm::vec3 tpos(anim_poses.poses[i].position.x, anim_poses.poses[i].position.y, anim_poses.poses[i].position.z);
 					glm::quat tori(anim_poses.poses[i].orientation.w, anim_poses.poses[i].orientation.x, anim_poses.poses[i].orientation.y, anim_poses.poses[i].orientation.z);
 					env.SetActorPosition(i, tpos, tori, dt, true);
 				}
 			}
 			
-			// update the camera
-			camera.SetPose(position, orientation);
+			if (keep_vehicles_in_frame){
+				glm::vec2 look_to(-vlong.y, vlong.x);
+				look_to = glm::normalize(look_to);
+				float theta = atan2f(look_to.y, look_to.x);
+				float camdist = 1.25f*vmag_long*focal_length/horizontal_pixdim;
+				glm::vec2 look_from = midpoint - camdist*look_to;
+				float cam_height = env.GetGroundHeight(look_from.x, look_from.y) + position.z;
+				camera.SetPose(glm::vec3(look_from.x, look_from.y, cam_height), glm::quat(cosf(0.5f*theta), 0.0f, 0.0f, sinf(0.5f*theta)));
+			}
+			else{
+				camera.SetPose(position, orientation);
+			}
 			camera.Update(&env, dt);
 		
 			// convert to a ROS image

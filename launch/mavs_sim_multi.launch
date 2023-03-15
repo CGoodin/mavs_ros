@@ -94,6 +94,7 @@
     <param name="horizontal_pixdim" value="0.00525" />
     <param name="vertical_pixdim" value="0.0035" />
     <param name="focal_length" value="0.0035" />
+    <param name="keep_vehicles_in_frame" value="true" />
   </node>
 
 
