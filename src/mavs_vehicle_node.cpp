@@ -272,6 +272,7 @@ int main(int argc, char **argv){
 			true_odom.header.stamp = ros::Time::now();
 			odom_msg.header.frame_id = "odom";
 			true_odom.header.frame_id = "odom";
+			odom_msg.child_frame_id = vehicle_id;
 			rtk_pub.publish(odom_msg);
 		}
 
