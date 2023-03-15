@@ -30,6 +30,7 @@ int main(int argc, char **argv){
 
 	ros::Publisher path_pub = n.advertise<nav_msgs::Path>("mavs_ros/global_path", 10);
 	ros::Publisher map_pub = n.advertise<nav_msgs::OccupancyGrid>("mavs_ros/cost_map", 10);
+	ros::Publisher map_vis_pub = n.advertise<nav_msgs::OccupancyGrid>("mavs_ros/cost_map_vis", 10);
 
 	std::string scene_file;
 	if (ros::param::has("~scene_file")){
@@ -130,6 +131,7 @@ int main(int argc, char **argv){
 
 		if (path_found)path_pub.publish(ros_path);
 		map_pub.publish(grid);
+		map_vis_pub.publish(grid);
 
 		rate.sleep();
 		ros::spinOnce();
