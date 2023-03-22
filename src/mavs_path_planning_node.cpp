@@ -92,10 +92,12 @@ int main(int argc, char **argv){
 	detector.SetMaxHeight(min_obs_height);
 	detector.SetNumIgnore(0);
 	detector.Update(&env, 0.1);
-	mavs::OccupancyGrid mavs_grid = detector.GetGrid();
-	nav_msgs::OccupancyGrid grid, seg_grid;
-	mavs_ros_utils::CopyFromMavsGrid(grid,mavs_grid);
+	mavs::OccupancyGrid mavs_grid = detector.GetBinaryGrid(95);
+	
+	nav_msgs::OccupancyGrid grid, seg_grid, vis_grid;
 
+	mavs_ros_utils::CopyFromMavsGrid(grid,mavs_grid);
+	mavs_ros_utils::CopyFromMavsGrid(vis_grid,mavs_grid);
 
 	mavs_ros::Astar astar_planner;
 
@@ -131,7 +133,7 @@ int main(int argc, char **argv){
 
 		if (path_found)path_pub.publish(ros_path);
 		map_pub.publish(grid);
-		map_vis_pub.publish(grid);
+		map_vis_pub.publish(vis_grid);
 
 		rate.sleep();
 		ros::spinOnce();

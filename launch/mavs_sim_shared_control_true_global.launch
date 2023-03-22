@@ -3,8 +3,9 @@
   <arg name="vehicle_file_arg" default="/home/cgoodin/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
 
   <arg name="cmd_vel_topic_arg" default="nature/cmd_vel" />
-  <arg name="point_cloud_topic_arg" default="nature/points" />
   <arg name="odometry_topic_arg" default="nature/odometry" />
+  <arg name="map_topic_arg" default="nature/occupancy_grid" />
+  <arg name="global_path_topic_arg" default="nature/global_path" />
 
   <node name="mavs_vehcicle_node" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
     <remap from="mavs_ros/cmd_vel" to="$(arg cmd_vel_topic_arg)"/> 
@@ -21,26 +22,17 @@
     <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
     <param name= "use_human_driver" value="false" />
     <param name= "shared_control" value="true" />
-    <param name= "auto_frac" value="0.5" />
+    <param name= "auto_frac" value="1.0" />
   </node>
 
-  <node name="mavs_sensors_node" pkg="mavs_ros" type="mavs_sensors_node" output="screen" required="true" >
-    <remap from="mavs_ros/point_cloud2" to="$(arg point_cloud_topic_arg)"/> 
-    <param name= "use_lidar" value="true" />
-    <param name= "display_lidar" value="true" />
-    <param name= "register_lidar" value="true" />
-    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
-    <param name = "lidar_type" value = "OS1"/>
-    <param name="blanking_dist" value="5.0" />
-    <param name="scene_file" value="$(arg scene_file_arg)"/>
-  </node>
-
-  <node name="mavs_path_planning_Node" pkg="mavs_ros" type="mavs_path_planning_node" output="screen" required="true" >
+  <node name="mavs_path_planning_node" pkg="mavs_ros" type="mavs_path_planning_node" output="screen" required="true" >
     <remap from="mavs_ros/odometry" to="$(arg odometry_topic_arg)"/> 
+    <remap from="mavs_ros/cost_map" to="$(arg map_topic_arg)"/>
+    <remap from="mavs_ros/global_path" to="$(arg global_path_topic_arg)"/>  
     <param name="scene_file" value="$(arg scene_file_arg)"/>
-    <param name="upper_x_limit" value="50.0" />
+    <param name="upper_x_limit" value="55.0" />
     <param name="upper_y_limit" value="20.0" />
-    <param name="lower_x_limit" value="-50.0" />
+    <param name="lower_x_limit" value="-55.0" />
     <param name="lower_y_limit" value="-20.0" />
     <param name="min_obs_height" value="0.5" />
     <param name="truth_map_res" value="0.25" />
