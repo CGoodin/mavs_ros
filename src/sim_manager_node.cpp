@@ -3,6 +3,7 @@
 //ros includes
 #include "ros/ros.h"
 #include "nav_msgs/Odometry.h"
+#include "std_msgs/Int32.h"
 // package includes
 #include "mavs_ros_utils.h"
 // mavs includes
@@ -64,6 +65,9 @@ int main(int argc, char **argv){
 	ros::NodeHandle n;
 
 	ros::Subscriber odom_sub = n.subscribe("mavs_ros/odometry_true", 1, OdomCallback);
+	ros::Publisher state_pub = n.advertise<std_msgs::Int32>("avt_341/state", 10);
+  	std_msgs::Int32 state;
+  	state.data = 0; // running
 
 	std::string scene_file;
 	if (ros::param::has("~scene_file")){
@@ -122,6 +126,14 @@ int main(int argc, char **argv){
 		ros::param::get("~obstacle_slope_thresh", obstacle_slope_thresh);
 	}
 
+	std::vector<double> waypoints_x_list;
+	if( !n.getParam("/waypoints_x", waypoints_x_list) ) ROS_ERROR("Failed to get parameter \"waypoints_x\" from server.");
+	std::vector<double> waypoints_y_list;
+	if( !n.getParam("/waypoints_y", waypoints_y_list) ) ROS_ERROR("Failed to get parameter \"waypoints_y\" from server.");
+	if (waypoints_x_list.size()<=0 || waypoints_y_list.size()<=0) ROS_ERROR("SIM MANAGER NODE FAILED TO LOAD ANY WAYPOINTS");
+	float goal_x = (float)waypoints_x_list.back();
+	float goal_y = (float)waypoints_y_list.back();
+
 	mavs::environment::Environment env;
 	mavs::raytracer::embree::EmbreeTracer scene;
 	scene.Load(scene_file); 
@@ -177,14 +189,34 @@ int main(int argc, char **argv){
 				failed = true;
 				break;
 			}
+
+			float dist_to_goal = sqrtf(powf(px-goal_x,2.0f)+powf(py-goal_y,2.0f));
+			if (dist_to_goal<=4.0f){
+				failed = false;
+				break;
+			}
+
 		}
+
+		state_pub.publish(state);
 
 		rate.sleep();
 		ros::spinOnce();
 	} //while ros OK
 
-	if (!failed)sout<<"SUCCESS"<<std::endl;
+	px = odom.pose.pose.position.x;
+	py = odom.pose.pose.position.y;
+	float dist_to_goal = sqrtf(powf(px-goal_x,2.0f)+powf(py-goal_y,2.0f));
+	if (dist_to_goal>4.0f && !failed){
+		sout<<"AUTONOMY STACK CRASHED"<<std::endl;
+	}
+	else if (!failed){
+		sout<<"SUCCESS"<<std::endl;
+	}
+
 	sout.close();
+	
 	if (save_trajectory) fout.close();
+	
 	return 0;
 }

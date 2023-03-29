@@ -22,7 +22,7 @@
     <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
     <param name= "use_human_driver" value="false" />
     <param name= "shared_control" value="true" />
-    <param name= "auto_frac" value="1.0" />
+    <param name= "auto_frac" value="0.5" />
   </node>
 
   <node name="mavs_path_planning_node" pkg="mavs_ros" type="mavs_path_planning_node" output="screen" required="true" >
@@ -38,6 +38,22 @@
     <param name="truth_map_res" value="0.25" />
     <param name="goal_x" value="45.0" />
     <param name="goal_y" value="0.0" />
+  </node>
+
+  <node name="sim_manager_node" pkg="mavs_ros" type="sim_manager_node" output="screen" required="true" >
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name = "timeout" value = "600.0"/> 
+    <param name = "upper_x_limit" value = "55.0"/> 
+    <param name = "upper_y_limit" value = "20.0"/> 
+    <param name = "lower_x_limit" value = "-55.0"/> 
+    <param name = "lower_y_limit" value = "-20.0"/> 
+    <param name = "min_obs_height" value = "0.5"/> 
+    <param name = "truth_map_res" value = "0.25"/> 
+    <param name = "vehicle_length" value = "3.55"/>
+    <param name = "vehicle_width" value = "1.55"/> 
+    <param name = "display_map" value = "false"/> 
+    <param name = "save_trajectory" value = "true"/> 
+    <param name = "obstacle_slope_thresh" value = "65"/> 
   </node>
 
   <node pkg="tf" name="static_transform_publisher" type="static_transform_publisher" args="0 0 0 0 0 0 1 map odom 10" />
