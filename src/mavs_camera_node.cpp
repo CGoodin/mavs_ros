@@ -195,10 +195,10 @@ int main(int argc, char **argv){
 	while (ros::ok()){
 
 		if ((int)poses_map.size()==num_veh || num_veh==1){
-			if (num_veh==1){
-				env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
-			}
-			else{
+			//if (num_veh==1){
+			//	env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
+			//}
+			//else{
 				// consolidate all the animation poses
 				geometry_msgs::PoseArray anim_poses;
 				//anim_poses.header.stamp = n->now();
@@ -216,20 +216,22 @@ int main(int argc, char **argv){
 						env.SetActorPosition(i, tpos, tori, dt, true);
 					}
 				}
-			}
-
+			//}
+			
 			double t0 = omp_get_wtime();
-			env.AdvanceParticleSystems(0.1);
+			//env.AdvanceParticleSystems(0.1);
+			env.AdvanceTime(dt);
 
 			camera.SetPose(veh_state);
 			
 			camera.Update(&env, 0.1);
 		
-			mavs::Image mavs_img;
-			
+			mavs::Image mavs_img = camera.GetRosImage();
 			sensor_msgs::Image img;
 			mavs_ros_utils::CopyFromMavsImage(img, mavs_img);
-
+			img.header.stamp = ros::Time::now();
+			img.header.frame_id = "odom";
+			camera_pub.publish(img);
 
 
 			if (publish_driving_commands){	
@@ -268,10 +270,6 @@ int main(int argc, char **argv){
 			}
 
 			nscans++;
-
-			img.header.stamp = ros::Time::now();
-			img.header.frame_id = "odom";
-			camera_pub.publish(img);
 
 			if (display_image){
 				camera.Display();

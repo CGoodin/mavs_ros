@@ -219,10 +219,10 @@ int main(int argc, char **argv){
 		//env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
 
 		if ((int)poses_map.size()==num_veh || num_veh==1){
-			if (num_veh==1){
-				env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
-			}
-			else{
+			//if (num_veh==1){
+			//	env.SetActorPosition(0, veh_state.pose.position, veh_state.pose.quaternion);
+			//}
+			//else{
 				// consolidate all the animation poses
 				geometry_msgs::PoseArray anim_poses;
 				//anim_poses.header.stamp = n->now();
@@ -240,7 +240,7 @@ int main(int argc, char **argv){
 						env.SetActorPosition(i, tpos, tori, dt, true);
 					}
 				}
-			}
+			//}
 
 			double t0 = omp_get_wtime();
 			env.AdvanceParticleSystems(0.1);
