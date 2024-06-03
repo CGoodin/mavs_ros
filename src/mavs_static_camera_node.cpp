@@ -218,15 +218,23 @@ int main(int argc, char **argv){
 			}
 			camera.Update(&env, dt);
 		
-			// convert to a ROS image
-			mavs::Image mavs_img;
+
+			mavs::Image mavs_img = camera.GetRosImage();
 			sensor_msgs::Image img;
 			mavs_ros_utils::CopyFromMavsImage(img, mavs_img);
+			img.header.stamp = ros::Time::now();
+			img.header.frame_id = "odom";
+			camera_pub.publish(img);
+
+			// convert to a ROS image
+			//mavs::Image mavs_img;
+			//sensor_msgs::Image img;
+			//mavs_ros_utils::CopyFromMavsImage(img, mavs_img);
 
 			// publish the image
-			img.header.stamp = ros::Time::now();
-			img.header.frame_id = "static_camera";
-			camera_pub.publish(img);
+			//img.header.stamp = ros::Time::now();
+			//img.header.frame_id = "static_camera";
+			//camera_pub.publish(img);
 
 			if (display_image){
 				camera.Display();
