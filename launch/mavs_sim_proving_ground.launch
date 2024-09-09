@@ -1,5 +1,5 @@
 <launch>
- <arg name="scene_file_arg" default="/cavs/projects/Halo/Autonomous-P/Modeling-P/MAVS/mavs/data/scenes/forester_scene_less_trees_simple.json" /> 
+ <arg name="scene_file_arg" default="/cavs/projects/Halo/Autonomous-P/Modeling-P/MAVS/mavs/data/scenes/pg_sw_polygons_v2.json" /> 
   <arg name="vehicle_file_arg" default="/cavs/projects/Halo/Autonomous-P/Modeling-P/MAVS/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
 
   <arg name="cmd_vel_topic_arg" default="nature/cmd_vel" />
@@ -11,9 +11,9 @@
     <remap from="mavs_ros/odometry" to="$(arg odometry_topic_arg)"/> 
     <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
     <param name= "debug_camera" value="true" />
-    <param name = "Initial_X_Position" value = "-50.0"/>
-    <param name = "Initial_Y_Position" value = "0.0"/>
-    <param name = "Initial_Heading" value = "0.0"/>
+    <param name = "Initial_X_Position" value = "233.0"/>
+    <param name = "Initial_Y_Position" value = "255.0"/>
+    <param name = "Initial_Heading" value = "-2.0"/>
     <param name="scene_file" value="$(arg scene_file_arg)"/>
     <param name = "soil_strength" value = "250"/> 
     <param name = "surface_type" value = "dry"/>  

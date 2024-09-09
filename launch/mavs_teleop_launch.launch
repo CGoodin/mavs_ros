@@ -1,6 +1,6 @@
 <launch>
- <arg name="scene_file_arg" default="/home/cgoodin/mavs/data/scenes/cube_scene.json" /> 
-  <arg name="vehicle_file_arg" default="/home/cgoodin/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
+ <arg name="scene_file_arg" default="/cavs/projects/Halo/Autonomous-P/Modeling-P/MAVS/mavs/data/scenes/cube_scene.json" /> 
+  <arg name="vehicle_file_arg" default="/cavs/projects/Halo/Autonomous-P/Modeling-P/MAVS/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
 
 
 
@@ -17,6 +17,8 @@
     <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
     <param name= "use_human_driver" value="true" />
   </node>
+
+  <rosparam file="$(find nature)/config/waypoints.yaml" />
 
   <node name="sim_manager_node" pkg="mavs_ros" type="sim_manager_node" output="screen" required="true" >
     <param name="scene_file" value="$(arg scene_file_arg)"/>
