@@ -1,7 +1,7 @@
 <launch>
-<arg name="scene_file_arg" default="/cavs/projects/Halo/Autonomous-P/Modeling-P/MAVS/mavs/data/scenes/pg_sw_polygons_v2.json" /> 
+<arg name="scene_file_arg" default="/mavs/data/scenes/pg_sw_polygons_v2.json" /> 
 <!--   <arg name="scene_file_arg" default="/cavs/projects/Halo/Autonomous-P/Modeling-P/MAVS/mavs/data/scenes/cube_scene.json" />-->
-  <arg name="vehicle_file_arg" default="/cavs/projects/Halo/Autonomous-P/Modeling-P/MAVS/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
+  <arg name="vehicle_file_arg" default="/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
 
   <arg name="cmd_vel_topic_arg" default="nature/cmd_vel" />
   <arg name="point_cloud_topic_arg" default="nature/points" />
