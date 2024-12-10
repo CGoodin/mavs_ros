@@ -37,7 +37,7 @@
   </node>
 	
   <node name="mavs_gps_node" pkg="mavs_ros" type="mavs_gps_node" output="screen" required="true" >
-    <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true001"/>  
+    <!--<remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true001"/>  -->
     <param name="scene_file" value="$(arg scene_file_arg)"/>
     <param name= "display_image" value="true" />
     <param name="off_x" value="0.0" />
