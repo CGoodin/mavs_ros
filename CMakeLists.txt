@@ -76,6 +76,15 @@ target_link_libraries(mavs_camera_node
   ${EMBREE_LIBRARY}
 )
 
+add_executable(mavs_gps_node src/mavs_gps_node.cpp )
+target_link_libraries(mavs_gps_node
+  ${catkin_LIBRARIES}
+  X11
+  gomp
+  MAVS::mavs 
+  ${EMBREE_LIBRARY}
+)
+
 add_executable(mavs_static_camera_node src/mavs_static_camera_node.cpp src/mavs_ros_utils.cpp)
 target_link_libraries(mavs_static_camera_node
   ${catkin_LIBRARIES}
@@ -109,6 +118,7 @@ install(TARGETS
   mavs_vehicle_node
   mavs_sensors_node
   mavs_camera_node
+  mavs_gps_node
   mavs_static_camera_node
   sim_manager_node
   mavs_path_planning_node
