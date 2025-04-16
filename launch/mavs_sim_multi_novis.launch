@@ -1,0 +1,189 @@
+<launch>
+  <arg name="scene_file_arg" default="/home/cgoodin/mavs/data/scenes/forester_scene_less_trees_simple.json" /> 
+  <arg name="vehicle_file_arg" default="/home/cgoodin/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
+
+  <arg name="num_vehicles_arg" default="3" />
+
+  <!--<arg name="cmd_vel_topic_arg" default="nature/cmd_vel" />
+  <arg name="point_cloud_topic_arg" default="nature/points" />
+  <arg name="odometry_topic_arg" default="nature/odometry" /> -->
+<!-- vehicle nodes _______________________________________________________________________________________ -->	
+  <node name="mavs_vehcicle_node1" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
+    <remap from="mavs_ros/cmd_vel" to="mavs_ros/cmd_vel001"/> 
+    <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true001"/> 
+	<remap from="mavs_ros/odometry" to="mavs_ros/odometry001"/> 
+	<remap from="mavs_ros/imu" to="mavs_ros/imu001"/> 
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <remap from="mavs_ros/anim_poses" to="mavs_ros/anim_poses001"/> 
+    <param name= "debug_camera" value="false" />
+    <param name = "Initial_X_Position" value = "-50.0"/>
+    <param name = "Initial_Y_Position" value = "0.0"/>
+    <param name = "Initial_Heading" value = "0.0"/>
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name = "soil_strength" value = "250"/> 
+    <param name = "surface_type" value = "dry"/>  
+    <param name= "publish_imu" value="true" />
+    <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
+    <param name= "use_human_driver" value="false" />
+    <param name="vehicle_id" value="vehicle1" />
+    <param name="sensor_name" value="vehicle_1_camera" />
+  </node>
+
+  <node name="mavs_vehcicle_node2" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
+    <remap from="mavs_ros/cmd_vel" to="mavs_ros/cmd_vel002"/> 
+    <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true002"/>
+	<remap from="mavs_ros/odometry" to="mavs_ros/odometry002"/> 
+	<remap from="mavs_ros/imu" to="mavs_ros/imu002"/> 
+    <remap from="mavs_ros/anim_poses" to="mavs_ros/anim_poses002"/> 
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name= "debug_camera" value="false" />
+    <param name = "Initial_X_Position" value = "-40.0"/>
+    <param name = "Initial_Y_Position" value = "0.0"/>
+    <param name = "Initial_Heading" value = "0.0"/>
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name = "soil_strength" value = "250"/> 
+    <param name = "surface_type" value = "dry"/>  
+    <param name= "publish_imu" value="true" />
+    <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
+    <param name= "use_human_driver" value="false" />
+    <param name="vehicle_id" value="vehicle2" />
+    <param name="sensor_name" value="vehicle_2_camera" />
+  </node>
+
+  <node name="mavs_vehcicle_node3" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
+    <remap from="mavs_ros/cmd_vel" to="mavs_ros/cmd_vel003"/> 
+    <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true003"/>
+	<remap from="mavs_ros/odometry" to="mavs_ros/odometry003"/> 
+	<remap from="mavs_ros/imu" to="mavs_ros/imu003"/> 
+    <remap from="mavs_ros/anim_poses" to="mavs_ros/anim_poses003"/> 
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name= "debug_camera" value="false" />
+    <param name = "Initial_X_Position" value = "-30.0"/>
+    <param name = "Initial_Y_Position" value = "0.0"/>
+    <param name = "Initial_Heading" value = "0.0"/>
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name = "soil_strength" value = "250"/> 
+    <param name = "surface_type" value = "dry"/>  
+    <param name= "publish_imu" value="true" />
+    <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
+    <param name= "use_human_driver" value="false" />
+    <param name="vehicle_id" value="vehicle3" />
+    <param name="sensor_name" value="vehicle_3_camera" />
+  </node>
+
+<!-- lidar nodes _____________________________________________________________________________________________ -->	
+  <node name="mavs_sensors_node_001" pkg="mavs_ros" type="mavs_sensors_node" output="screen" required="true" >
+    <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true001"/>  
+	<remap from="mavs_ros/point_cloud2" to="mavs_ros/point_cloud2001"/>  
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name= "use_lidar" value="true" />
+    <param name= "display_lidar" value="false" />
+    <param name= "register_lidar" value="true" />
+    <param name = "lidar_type" value = "OS1"/>
+    <param name="blanking_dist" value="5.0" />
+    <param name="num_vehicles" value="$(arg num_vehicles_arg)" />
+    <param name="off_x" value="1.0" />
+    <param name="off_y" value="0.0" />
+    <param name="off_z" value="1.5" />
+    <param name="sensor_name" value="vehicle_1_lidar" />
+  </node>
+	
+  <node name="mavs_sensors_node_002" pkg="mavs_ros" type="mavs_sensors_node" output="screen" required="true" >
+    <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true002"/>  
+	<remap from="mavs_ros/point_cloud2" to="mavs_ros/point_cloud2002"/>  
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name= "use_lidar" value="true" />
+    <param name= "display_lidar" value="false" />
+    <param name= "register_lidar" value="true" />
+    <param name = "lidar_type" value = "OS1"/>
+    <param name="blanking_dist" value="5.0" />
+    <param name="num_vehicles" value="$(arg num_vehicles_arg)" />
+    <param name="off_x" value="1.0" />
+    <param name="off_y" value="0.0" />
+    <param name="off_z" value="1.5" />
+    <param name="sensor_name" value="vehicle_1_lidar" />
+  </node>
+
+<node name="mavs_sensors_node_003" pkg="mavs_ros" type="mavs_sensors_node" output="screen" required="true" >
+    <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true003"/>  
+	<remap from="mavs_ros/point_cloud2" to="mavs_ros/point_cloud2003"/>  
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name= "use_lidar" value="true" />
+    <param name= "display_lidar" value="false" />
+    <param name= "register_lidar" value="true" />
+    <param name = "lidar_type" value = "OS1"/>
+    <param name="blanking_dist" value="5.0" />
+    <param name="num_vehicles" value="$(arg num_vehicles_arg)" />
+    <param name="off_x" value="1.0" />
+    <param name="off_y" value="0.0" />
+    <param name="off_z" value="1.5" />
+    <param name="sensor_name" value="vehicle_1_lidar" />
+  </node>
+
+<!-- Camera nodes _______________________________________________________________________________________  -->
+<!--	
+  <node name="mavs_camera_node_001" pkg="mavs_ros" type="mavs_camera_node" output="screen" required="true" >
+    <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true001"/>  
+    <remap from="mavs_ros/cmd_vel" to="mavs_ros/cmd_vel001"/>
+	<remap from="mavs_ros/image" to="mavs_ros/image001"/>  
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name= "display_image" value="false" />
+    <param name="num_vehicles" value="$(arg num_vehicles_arg)" />
+    <param name="off_x" value="-10.0" />
+    <param name="off_y" value="0.0" />
+    <param name="off_z" value="2.5" />
+    <param name="num_horizontal_pix" value="384" />
+    <param name="num_vertical_pix" value="256" />
+    <param name="horizontal_pixdim" value="0.00525" />
+    <param name="vertical_pixdim" value="0.0035" />
+    <param name="focal_length" value="0.0035" />
+    <param name="publish_driving_commands" value="true" />
+    <param name="sensor_name" value="vehicle_1_cam" />
+  </node>
+	
+	
+  <node name="mavs_camera_node_002" pkg="mavs_ros" type="mavs_camera_node" output="screen" required="true" >
+    <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true002"/>  
+    <remap from="mavs_ros/cmd_vel" to="mavs_ros/cmd_vel002"/>
+	<remap from="mavs_ros/image" to="mavs_ros/image002"/>  
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name= "display_image" value="false" />
+    <param name="num_vehicles" value="$(arg num_vehicles_arg)" />
+    <param name="off_x" value="-10.0" />
+    <param name="off_y" value="0.0" />
+    <param name="off_z" value="2.5" />
+    <param name="num_horizontal_pix" value="384" />
+    <param name="num_vertical_pix" value="256" />
+    <param name="horizontal_pixdim" value="0.00525" />
+    <param name="vertical_pixdim" value="0.0035" />
+    <param name="focal_length" value="0.0035" />
+    <param name="publish_driving_commands" value="true" />
+    <param name="sensor_name" value="vehicle_1_cam" />
+  </node>		
+		
+  <node name="mavs_camera_node_003" pkg="mavs_ros" type="mavs_camera_node" output="screen" required="true" >
+    <remap from="mavs_ros/odometry_true" to="mavs_ros/odometry_true003"/>  
+    <remap from="mavs_ros/cmd_vel" to="mavs_ros/cmd_vel003"/>
+	<remap from="mavs_ros/image" to="mavs_ros/image003"/>  
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name= "display_image" value="false" />
+    <param name="num_vehicles" value="$(arg num_vehicles_arg)" />
+    <param name="off_x" value="-10.0" />
+    <param name="off_y" value="0.0" />
+    <param name="off_z" value="2.5" />
+    <param name="num_horizontal_pix" value="384" />
+    <param name="num_vertical_pix" value="256" />
+    <param name="horizontal_pixdim" value="0.00525" />
+    <param name="vertical_pixdim" value="0.0035" />
+    <param name="focal_length" value="0.0035" />
+    <param name="publish_driving_commands" value="true" />
+    <param name="sensor_name" value="vehicle_1_cam" />
+  </node>
+-->
+</launch>
