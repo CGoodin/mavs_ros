@@ -14,6 +14,7 @@
 	<arg name="lidar_offset_y_arg" default="0.0" />
 	<arg name="lidar_offset_z_arg" default="1.5" />
 	<arg name="blanking_dist_arg" default="2.0" />
+	<arg name="register_lidar_to_world_arg" default="false" />
 
 	<node name="mavs_vehcicle_node" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
 		<remap from="mavs_ros/cmd_vel" to="$(arg cmd_vel_topic_arg)"/>
@@ -34,8 +35,9 @@
 	<node name="mavs_sensors_node" pkg="mavs_ros" type="mavs_sensors_node" output="screen" required="true" >
 		<remap from="mavs_ros/point_cloud2" to="$(arg point_cloud_topic_arg)"/>
 		<param name= "use_lidar" value="true" />
-		<param name= "display_lidar" value="$(arg show_debug_arg)" />
-		<param name= "register_lidar" value="false" />
+		<!-- <param name= "display_lidar" value="$(arg show_debug_arg)" /> -->
+		<param name= "display_lidar" value="false" />
+		<param name= "register_lidar" value="$(arg register_lidar_to_world_arg)" />
 		<param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
 		<param name = "lidar_type" value = "$(arg lidar_type_arg)"/>
 		<param name="blanking_dist" value="$(arg blanking_dist_arg)" />

@@ -17,6 +17,8 @@
 #include "vehicles/rp3d_veh/mavs_rp3d_veh.h"
 #include "raytracers/embree_tracer/embree_tracer.h"
 #include "sensors/mavs_sensors.h"
+#include "sensor_msgs/Image.h"
+#include "sensor_msgs/CameraInfo.h"
 
 float auto_throttle = 0.0f;
 float auto_steering = 0.0f;
@@ -42,6 +44,7 @@ int main(int argc, char **argv){
 	ros::Publisher anim_poses_pub = n.advertise<geometry_msgs::PoseArray>("mavs_ros/anim_poses", 10);
 	ros::Publisher rtk_pub = n.advertise<nav_msgs::Odometry>("mavs_ros/odometry", 10);
 	ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("mavs_ros/imu", 10);
+	ros::Publisher camera_pub = n.advertise<sensor_msgs::Image>("mavs_ros/vehicle_debug_image", 1);
 
 	//--- get parameters ---//
 	bool use_sim_time = false;
@@ -240,7 +243,13 @@ int main(int argc, char **argv){
 		if (render_debug && nsteps%10==0){
 			camera.SetPose(veh_state);
 			camera.Update(&env, 0.033);
-			camera.Display();
+			//camera.Display();
+			mavs::Image mavs_img = camera.GetRosImage();
+			sensor_msgs::Image img;
+			mavs_ros_utils::CopyFromMavsImage(img, mavs_img);
+			img.header.stamp = ros::Time::now();
+			img.header.frame_id = "odom";
+			camera_pub.publish(img);
 		}
 
 		// imu update
