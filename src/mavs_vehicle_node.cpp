@@ -26,10 +26,11 @@ float auto_braking = 0.0f;
 float human_throttle = 0.0;
 float human_steering = 0.0;
 float human_braking = 0.0;
+float steering_scale = 1.0f;
 void TwistCallback(const geometry_msgs::Twist::ConstPtr &rcv_msg){
 	auto_throttle = rcv_msg->linear.x;
 	auto_braking = rcv_msg->linear.y;
-	auto_steering = rcv_msg->angular.z;
+	auto_steering = steering_scale*rcv_msg->angular.z;
 }
 
 int main(int argc, char **argv){
@@ -120,6 +121,11 @@ int main(int argc, char **argv){
 		ros::param::get("~auto_frac", auto_frac);
 		auto_frac = std::min(1.0f,std::max(0.0f, auto_frac));
 		human_frac = 1.0f-auto_frac;
+	}
+
+	
+	if (ros::param::has("~steering_scale")) {
+		ros::param::get("~steering_scale", steering_scale);
 	}
 
 	mavs::sensor::imu::ImuSimple imu;

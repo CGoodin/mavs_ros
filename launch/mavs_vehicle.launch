@@ -1,0 +1,43 @@
+<launch>
+ <arg name="scene_file_arg" default="/mavs/data/scenes/surface_only.json" /> 
+  <arg name="vehicle_file_arg" default="/mavs/data/vehicles/rp3d_vehicles/mrzr4_tires_low_gear.json" />
+
+
+  <node name="mavs_vehcicle_node" pkg="mavs_ros" type="mavs_vehicle_node" output="screen" required="true" >
+	<!--<remap from="mavs_ros/cmd_vel" to="cmd_vel"/>-->
+    <remap from="mavs_ros/odometry" to="odometry"/>
+    <param name="rp3d_vehicle_file" value="$(arg vehicle_file_arg)" />
+    <param name= "debug_camera" value="true" />
+    <param name = "Initial_X_Position" value = "-17.0"/>
+    <param name = "Initial_Y_Position" value = "99.0"/>
+    <param name = "Initial_Heading" value = "1.57"/>
+	<param name = "steering_scale" value = "0.25"/>
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name = "soil_strength" value = "75"/> 
+    <param name = "surface_type" value = "dry"/>  
+    <param name= "publish_imu" value="false" />
+    <param name = "imu_input_file" value = "$(find mavs_ros)/config/mavs_imu_inputs.json" />
+    <param name= "use_human_driver" value="false" />
+  </node>
+
+<!--
+
+  <rosparam file="$(find nature)/config/waypoints.yaml" />
+
+  <node name="sim_manager_node" pkg="mavs_ros" type="sim_manager_node" output="screen" required="true" >
+    <param name="scene_file" value="$(arg scene_file_arg)"/>
+    <param name = "timeout" value = "600.0"/> 
+    <param name = "upper_x_limit" value = "100.0"/> 
+    <param name = "upper_y_limit" value = "100.0"/> 
+    <param name = "lower_x_limit" value = "-100.0"/> 
+    <param name = "lower_y_limit" value = "-100.0"/> 
+    <param name = "min_obs_height" value = "0.65"/> 
+    <param name = "truth_map_res" value = "0.2"/> 
+    <param name = "vehicle_length" value = "3.55"/>
+    <param name = "vehicle_width" value = "1.55"/> 
+    <param name = "display_map" value = "false"/> 
+    <param name = "save_trajectory" value = "true"/> 
+    <param name = "obstacle_slope_thresh" value = "35"/> 
+  </node>-->
+
+</launch>
