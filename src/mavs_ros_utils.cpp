@@ -97,6 +97,49 @@ nav_msgs::Odometry CopyFromMavsVehicleState(mavs::VehicleState state){
 	return odom;
 }
 
+nav_msgs::Odometry CopyFromMavsVehicleStateBodyFixed(mavs::VehicleState state) {
+	nav_msgs::Odometry odom;
+	odom.pose.pose.position.x = state.pose.position.x;
+	odom.pose.pose.position.y = state.pose.position.y;
+	odom.pose.pose.position.z = state.pose.position.z;
+	odom.pose.pose.orientation.x = state.pose.quaternion.x;
+	odom.pose.pose.orientation.y = state.pose.quaternion.y;
+	odom.pose.pose.orientation.z = state.pose.quaternion.z;
+	odom.pose.pose.orientation.w = state.pose.quaternion.w;
+
+	double w = state.pose.quaternion.w;
+	double x = state.pose.quaternion.x;
+	double y = state.pose.quaternion.y; 
+	double z = state.pose.quaternion.z;
+	double R[3][3]; 
+	R[0][0] = 1.0 - 2.0 * (y * y + z * z);
+	R[0][1] = 2.0 * (x * y - z * w);
+	R[0][2] = 2.0 * (x * z + y * w);
+
+	R[1][0] = 2.0 * (x * y + z * w);
+	R[1][1] = 1.0 - 2.0 * (x * x + z * z);
+	R[1][2] = 2.0 * (y * z - x * w);
+
+	R[2][0] = 2.0 * (x * z - y * w);
+	R[2][1] = 2.0 * (y * z + x * w);
+	R[2][2] = 1.0 - 2.0 * (x * x + y * y);
+
+	double look_side[3] = { R[0][1], R[1][1], R[2][1] }; // East
+	double look_to[3] = { R[0][0], R[1][0], R[2][0] }; // North
+	double look_up[3] = { R[0][2], R[1][2], R[2][2] }; // Up
+	double vx = state.twist.linear.x;
+	double vy = state.twist.linear.y;
+	double vz = state.twist.linear.z;
+
+	odom.twist.twist.linear.x = vx * look_to[0] + vy * look_to[1] + vz * look_to[2];
+	odom.twist.twist.linear.y = vx * look_side[0] + vy * look_side[1] + vz * look_side[2];
+	odom.twist.twist.linear.z = vx * look_up[0] + vy * look_up[1] + vz * look_up[2];
+	odom.twist.twist.angular.x = state.twist.angular.x;
+	odom.twist.twist.angular.y = state.twist.angular.y;
+	odom.twist.twist.angular.z = state.twist.angular.z;
+	return odom;
+}
+
 void CopyFromMavsOdometry(nav_msgs::Odometry &odom, mavs::Odometry &mavs_odom){
 	odom.pose.pose.position.x = mavs_odom.pose.pose.position.x;
 	odom.pose.pose.position.y = mavs_odom.pose.pose.position.y;
@@ -108,6 +151,48 @@ void CopyFromMavsOdometry(nav_msgs::Odometry &odom, mavs::Odometry &mavs_odom){
 	odom.twist.twist.linear.x = mavs_odom.twist.twist.linear.x;
 	odom.twist.twist.linear.y = mavs_odom.twist.twist.linear.y;
 	odom.twist.twist.linear.z = mavs_odom.twist.twist.linear.z;
+	odom.twist.twist.angular.x = mavs_odom.twist.twist.angular.x;
+	odom.twist.twist.angular.y = mavs_odom.twist.twist.angular.y;
+	odom.twist.twist.angular.z = mavs_odom.twist.twist.angular.z;
+}
+
+void CopyFromMavsOdometryBodyFixed(nav_msgs::Odometry& odom, mavs::Odometry& mavs_odom) {
+	odom.pose.pose.position.x = mavs_odom.pose.pose.position.x;
+	odom.pose.pose.position.y = mavs_odom.pose.pose.position.y;
+	odom.pose.pose.position.z = mavs_odom.pose.pose.position.z;
+	odom.pose.pose.orientation.w = mavs_odom.pose.pose.quaternion.w;
+	odom.pose.pose.orientation.x = mavs_odom.pose.pose.quaternion.x;
+	odom.pose.pose.orientation.y = mavs_odom.pose.pose.quaternion.y;
+	odom.pose.pose.orientation.z = mavs_odom.pose.pose.quaternion.z;
+
+	double w = mavs_odom.pose.pose.quaternion.w;
+	double x = mavs_odom.pose.pose.quaternion.x;
+	double y = mavs_odom.pose.pose.quaternion.y;
+	double z = mavs_odom.pose.pose.quaternion.z;
+	double R[3][3];
+	R[0][0] = 1.0 - 2.0 * (y * y + z * z);
+	R[0][1] = 2.0 * (x * y - z * w);
+	R[0][2] = 2.0 * (x * z + y * w);
+
+	R[1][0] = 2.0 * (x * y + z * w);
+	R[1][1] = 1.0 - 2.0 * (x * x + z * z);
+	R[1][2] = 2.0 * (y * z - x * w);
+
+	R[2][0] = 2.0 * (x * z - y * w);
+	R[2][1] = 2.0 * (y * z + x * w);
+	R[2][2] = 1.0 - 2.0 * (x * x + y * y);
+
+	double look_side[3] = { R[0][1], R[1][1], R[2][1] }; // East
+	double look_to[3] = { R[0][0], R[1][0], R[2][0] }; // North
+	double look_up[3] = { R[0][2], R[1][2], R[2][2] }; // Up
+	double vx = mavs_odom.twist.twist.linear.x;
+	double vy = mavs_odom.twist.twist.linear.y;
+	double vz = mavs_odom.twist.twist.linear.z;
+
+	odom.twist.twist.linear.x = vx * look_to[0] + vy * look_to[1] + vz * look_to[2];
+	odom.twist.twist.linear.y = vx * look_side[0] + vy * look_side[1] + vz * look_side[2];
+	odom.twist.twist.linear.z = vx * look_up[0] + vy * look_up[1] + vz * look_up[2];
+	
 	odom.twist.twist.angular.x = mavs_odom.twist.twist.angular.x;
 	odom.twist.twist.angular.y = mavs_odom.twist.twist.angular.y;
 	odom.twist.twist.angular.z = mavs_odom.twist.twist.angular.z;

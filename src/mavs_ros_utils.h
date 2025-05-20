@@ -59,11 +59,25 @@ void CopyFromMavsFix(sensor_msgs::NavSatFix &fix, mavs::NavSatFix &mavs_fix);
 nav_msgs::Odometry CopyFromMavsVehicleState(mavs::VehicleState state);
 
 /**
+ * Copy a MAVS Vehicle state to a ROS Odometry message
+ * with velocities in body-fixed coordinates
+ * \param state The MAVS Vehicle State
+ */
+nav_msgs::Odometry CopyFromMavsVehicleStateBodyFixed(mavs::VehicleState state);
+
+/**
  * Copy a MAVS odometry message to a ROS Odometry message
  * \param odom The ROS output odometry message
  * \param mavs_odom The input MAVS odometry message
  */
 void CopyFromMavsOdometry(nav_msgs::Odometry &odom, mavs::Odometry &mavs_odom);
+
+/**
+ * Copy a MAVS odometry message to a ROS Odometry message with body fixed velocities
+ * \param odom The ROS output odometry message
+ * \param mavs_odom The input MAVS odometry message
+ */
+void CopyFromMavsOdometryBodyFixed(nav_msgs::Odometry& odom, mavs::Odometry& mavs_odom);
 
 /**
  * Copy a MAVS OccupancyGrid message to a ROS OccupancyGrid message

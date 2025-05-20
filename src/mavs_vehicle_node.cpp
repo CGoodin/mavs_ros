@@ -27,6 +27,38 @@ float human_throttle = 0.0;
 float human_steering = 0.0;
 float human_braking = 0.0;
 float steering_scale = 1.0f;
+
+
+#include <cmath>
+#include <iostream>
+
+
+// Multiply two quaternions: q1 * q2
+mavs::Quaternion MultiplyQuaternions(const mavs::Quaternion& q1, const mavs::Quaternion& q2) {
+	mavs::Quaternion result;
+	result.w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
+	result.x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
+	result.y = q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x;
+	result.z = q1.w * q2.z + q1.x * q2.y - q1.y * q2.x + q1.z * q2.w;
+	return result;
+}
+
+//Rotate a quaternion so yaw is referenced to Y - axis(North)
+mavs::Quaternion ReorientYawToYAxis(const mavs::Quaternion & q_original) {
+	// -90 degrees around Z-axis
+	double angle_rad = -M_PI / 2.0;
+	double half_angle = angle_rad / 2.0;
+	mavs::Quaternion q_rotation = {
+		std::cos(half_angle),  // w
+		0.0,                   // x
+		0.0,                   // y
+		std::sin(half_angle)   // z
+	};
+
+	mavs::Quaternion q_transformed = MultiplyQuaternions(q_rotation, q_original);
+	return q_transformed;
+}
+
 void TwistCallback(const geometry_msgs::Twist::ConstPtr &rcv_msg){
 	auto_throttle = rcv_msg->linear.x;
 	auto_braking = rcv_msg->linear.y;
@@ -113,6 +145,11 @@ int main(int argc, char **argv){
 	std::string sensor_name="vehicle_camera";
 	if (ros::param::has("~sensor_name")){
 		ros::param::get("~sensor_name", sensor_name);
+	}
+
+	std::string heading_zero = "east";
+	if (ros::param::has("~heading_zero")) {
+		ros::param::get("~heading_zero", heading_zero);
 	}
 
 	float auto_frac = 0.0f;
@@ -244,12 +281,14 @@ int main(int argc, char **argv){
 		mavs_veh.Update(&env, throttle, steering, -braking, dt);
 		mavs::VehicleState veh_state = mavs_veh.GetState();
 
-		nav_msgs::Odometry true_odom = mavs_ros_utils::CopyFromMavsVehicleState(veh_state);
+		//nav_msgs::Odometry true_odom = mavs_ros_utils::CopyFromMavsVehicleState(veh_state);
+		nav_msgs::Odometry true_odom = mavs_ros_utils::CopyFromMavsVehicleStateBodyFixed(veh_state);
+		
 
 		if (render_debug && nsteps%10==0){
 			camera.SetPose(veh_state);
 			camera.Update(&env, 0.033);
-			//camera.Display();
+			if (use_human_driver) camera.Display();
 			mavs::Image mavs_img = camera.GetRosImage();
 			sensor_msgs::Image img;
 			mavs_ros_utils::CopyFromMavsImage(img, mavs_img);
@@ -281,8 +320,14 @@ int main(int argc, char **argv){
 		piksi.Update(&env, 0.01);
 		if (elapsed_time > 1.0){
 			mavs::Odometry mavs_odom = piksi.GetOdometryMessage();
+			if ("heading_zero" == "north") {
+				mavs::Quaternion old_quat = mavs_odom.pose.pose.quaternion;
+				mavs::Quaternion new_quat = ReorientYawToYAxis(old_quat);
+				mavs_odom.pose.pose.quaternion = new_quat;
+			}
 			nav_msgs::Odometry odom_msg;
-			mavs_ros_utils::CopyFromMavsOdometry(odom_msg, mavs_odom);
+			//mavs_ros_utils::CopyFromMavsOdometry(odom_msg, mavs_odom);
+			mavs_ros_utils::CopyFromMavsOdometryBodyFixed(odom_msg, mavs_odom);
 			odom_msg.header.stamp = ros::Time::now();
 			true_odom.header.stamp = ros::Time::now();
 			odom_msg.header.frame_id = "odom";
